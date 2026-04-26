@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Reception Dashboard | Clinic System{% endblock %}
+
+{% block extra_css %}
+    {% include "dashboard/partials/_dashboard_styles.html" %}
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-shell">
+    {% include "dashboard/partials/_sidebar.html" %}
+    <div class="dashboard-main">
+        {% include "dashboard/partials/_topbar.html" %}
+        {% include "dashboard/partials/_reception_dashboard.html" %}
+    </div>
+</div>
+{% endblock %}

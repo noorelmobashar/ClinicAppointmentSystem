@@ -1,0 +1,17 @@
+# Test Login Credentials
+
+Patient:
+email: [patient@test.com](mailto:patient@test.com)
+password: 123456
+
+Doctor:
+email: [doctor@test.com](mailto:doctor@test.com)
+password: 123456
+
+Receptionist:
+email: [reception@test.com](mailto:reception@test.com)
+password: 123456
+
+Admin:
+email: [admin@test.com](mailto:admin@test.com)
+password: 123456

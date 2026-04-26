@@ -1,0 +1,149 @@
+<div class="role-dashboard">
+    <section class="dashboard-hero">
+        <div class="hero-content">
+            <div class="hero-kicker"><i class="bi bi-heart-pulse"></i> Patient Overview</div>
+            <h1>Manage your clinic visits with clarity and confidence.</h1>
+            <p>Track upcoming appointments, follow care milestones, and keep medical activity organized from one calm workspace.</p>
+        </div>
+        <div class="hero-actions">
+            <a href="#" class="dash-btn primary"><i class="bi bi-calendar-plus"></i>Book Appointment</a>
+            <a href="#" class="dash-btn secondary"><i class="bi bi-file-medical"></i>View Records</a>
+        </div>
+    </section>
+
+    <section class="dashboard-metrics" aria-label="Patient metrics">
+        <article class="metric-card">
+            <span class="metric-icon"><i class="bi bi-calendar2-check"></i></span>
+            <div>
+                <div class="metric-label">Total Appointments</div>
+                <div class="metric-value">{{ total_appointments|default:"12" }}</div>
+                <div class="metric-note">All clinic bookings</div>
+            </div>
+        </article>
+        <article class="metric-card">
+            <span class="metric-icon"><i class="bi bi-clock-history"></i></span>
+            <div>
+                <div class="metric-label">Upcoming</div>
+                <div class="metric-value">{{ upcoming_appointments|default:"2" }}</div>
+                <div class="metric-note">Scheduled visits</div>
+            </div>
+        </article>
+        <article class="metric-card">
+            <span class="metric-icon"><i class="bi bi-check2-circle"></i></span>
+            <div>
+                <div class="metric-label">Completed</div>
+                <div class="metric-value">{{ completed_visits|default:"8" }}</div>
+                <div class="metric-note">Closed consultations</div>
+            </div>
+        </article>
+        <article class="metric-card">
+            <span class="metric-icon"><i class="bi bi-activity"></i></span>
+            <div>
+                <div class="metric-label">Active</div>
+                <div class="metric-value">{{ active_appointments|default:"1" }}</div>
+                <div class="metric-note">Needs attention</div>
+            </div>
+        </article>
+    </section>
+
+    <section class="dashboard-grid">
+        <div class="dashboard-stack">
+            <article class="panel-card">
+                <div class="panel-heading">
+                    <div>
+                        <h2 class="panel-title">Upcoming appointments</h2>
+                        <p class="panel-subtitle">Confirmed and pending visits ordered for quick review.</p>
+                    </div>
+                    <span class="section-kicker">Focus</span>
+                </div>
+
+                <div class="appointment-list">
+                    <div class="appointment-item">
+                        <div class="appointment-time">10:30</div>
+                        <span class="appointment-icon"><i class="bi bi-heart-pulse"></i></span>
+                        <div>
+                            <div class="appointment-title">Dr. Sarah Ahmed</div>
+                            <div class="appointment-meta">Cardiology consultation - Today</div>
+                        </div>
+                        <span class="status-badge status-confirmed">Confirmed</span>
+                    </div>
+                    <div class="appointment-item">
+                        <div class="appointment-time">May 2</div>
+                        <span class="appointment-icon"><i class="bi bi-clipboard2-pulse"></i></span>
+                        <div>
+                            <div class="appointment-title">Dr. Omar Hassan</div>
+                            <div class="appointment-meta">Follow-up visit - 1:00 PM</div>
+                        </div>
+                        <span class="status-badge status-pending">Pending</span>
+                    </div>
+                    <div class="appointment-item">
+                        <div class="appointment-time">May 8</div>
+                        <span class="appointment-icon"><i class="bi bi-capsule"></i></span>
+                        <div>
+                            <div class="appointment-title">Medication review</div>
+                            <div class="appointment-meta">Primary care - 12:15 PM</div>
+                        </div>
+                        <span class="status-badge status-confirmed">Confirmed</span>
+                    </div>
+                </div>
+            </article>
+
+            <article class="panel-card">
+                <div class="panel-heading">
+                    <div>
+                        <h2 class="panel-title">Care snapshot</h2>
+                        <p class="panel-subtitle">A compact view of the items most likely to affect your next visit.</p>
+                    </div>
+                    <span class="section-kicker">Health</span>
+                </div>
+                <div class="mini-grid">
+                    <div class="mini-tile"><i class="bi bi-shield-check me-2"></i>Insurance details are ready for the next appointment</div>
+                    <div class="mini-tile"><i class="bi bi-prescription2 me-2"></i>One prescription renewal can be reviewed</div>
+                    <div class="mini-tile"><i class="bi bi-chat-square-text me-2"></i>Message history is available for your care team</div>
+                </div>
+            </article>
+        </div>
+
+        <aside class="dashboard-stack">
+            <article class="side-card">
+                <div class="side-heading">
+                    <h2 class="side-title">Quick highlights</h2>
+                    <span class="section-kicker">Live</span>
+                </div>
+                <div class="highlight-list">
+                    <div class="highlight-item">
+                        <div>
+                            <div class="highlight-label">Next confirmed visit</div>
+                            <div class="highlight-value">10:30</div>
+                        </div>
+                        <span class="status-badge status-confirmed">Good</span>
+                    </div>
+                    <div class="highlight-item">
+                        <div>
+                            <div class="highlight-label">Pending approvals</div>
+                            <div class="highlight-value">1</div>
+                        </div>
+                        <span class="status-badge status-pending">Pending</span>
+                    </div>
+                    <div class="highlight-item">
+                        <div>
+                            <div class="highlight-label">Completed visits</div>
+                            <div class="highlight-value">{{ completed_visits|default:"8" }}</div>
+                        </div>
+                        <span class="status-badge status-live">Info</span>
+                    </div>
+                </div>
+            </article>
+
+            <article class="side-card">
+                <h2 class="side-title">Quick actions</h2>
+                <p class="side-copy">Move directly into the patient tasks used most often.</p>
+                <div class="action-list">
+                    <a href="#" class="action-link featured"><span><i class="bi bi-calendar-plus me-2"></i>Book new appointment</span><i class="bi bi-plus"></i></a>
+                    <a href="#" class="action-link"><span><i class="bi bi-search me-2"></i>Find a doctor</span><i class="bi bi-arrow-right"></i></a>
+                    <a href="#" class="action-link"><span><i class="bi bi-credit-card me-2"></i>Review payments</span><i class="bi bi-arrow-right"></i></a>
+                </div>
+            </article>
+        </aside>
+    </section>
+</div>

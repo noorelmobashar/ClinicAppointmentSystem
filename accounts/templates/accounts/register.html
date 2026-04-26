@@ -1,0 +1,91 @@
+{% extends "base_auth.html" %}
+
+{% block title %}Register | Clinic System{% endblock %}
+
+{% block content %}
+<div class="auth-card p-4 p-sm-5">
+    <div class="text-center mb-4">
+        <div class="brand-mark mx-auto mb-3">
+            <i class="bi bi-person-plus"></i>
+        </div>
+        <div class="small text-uppercase fw-bold text-primary mb-2" style="letter-spacing: .2em;">Fast onboarding</div>
+        <h1 class="h3 fw-bold mb-2">Create account</h1>
+        <p class="text-secondary mb-0">Join the clinic appointment workspace.</p>
+    </div>
+
+    {% if form.non_field_errors %}
+        <div class="alert alert-danger rounded-4">
+            {% for error in form.non_field_errors %}
+                <div>{{ error }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="username" class="form-label fw-bold">Username</label>
+            <input type="text" class="form-control{% if form.username.errors %} is-invalid{% endif %}" id="username" name="username" placeholder="Choose a username" autocomplete="username" value="{{ form.username.value|default_if_none:'' }}" required>
+            {% if form.username.errors %}
+                <div class="invalid-feedback d-block">
+                    {% for error in form.username.errors %}{{ error }}{% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="mb-3">
+            <label for="email" class="form-label fw-bold">Email</label>
+            <input type="email" class="form-control{% if form.email.errors %} is-invalid{% endif %}" id="email" name="email" placeholder="name@example.com" autocomplete="email" value="{{ form.email.value|default_if_none:'' }}" required>
+            {% if form.email.errors %}
+                <div class="invalid-feedback d-block">
+                    {% for error in form.email.errors %}{{ error }}{% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="mb-3">
+            <label for="password" class="form-label fw-bold">Password</label>
+            <input type="password" class="form-control{% if form.password.errors %} is-invalid{% endif %}" id="password" name="password" placeholder="Create a password" autocomplete="new-password" required>
+            {% if form.password.errors %}
+                <div class="invalid-feedback d-block">
+                    {% for error in form.password.errors %}{{ error }}{% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="mb-3">
+            <label for="confirm_password" class="form-label fw-bold">Confirm Password</label>
+            <input type="password" class="form-control{% if form.confirm_password.errors %} is-invalid{% endif %}" id="confirm_password" name="confirm_password" placeholder="Confirm your password" autocomplete="new-password" required>
+            {% if form.confirm_password.errors %}
+                <div class="invalid-feedback d-block">
+                    {% for error in form.confirm_password.errors %}{{ error }}{% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="mb-4">
+            <label for="role" class="form-label fw-bold">Role</label>
+            <select class="form-select{% if form.role.errors %} is-invalid{% endif %}" id="role" name="role" required>
+                <option value="" {% if not form.role.value %}selected{% endif %} disabled>Select role</option>
+                {% for value, label in form.fields.role.choices %}
+                    <option value="{{ value }}" {% if form.role.value == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            {% if form.role.errors %}
+                <div class="invalid-feedback d-block">
+                    {% for error in form.role.errors %}{{ error }}{% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="d-flex align-items-center justify-content-between mb-4 px-2 py-2 rounded-4" style="background: color-mix(in srgb, var(--clinic-accent) 45%, white); border: 1px solid color-mix(in srgb, var(--clinic-primary) 20%, transparent);">
+            <span class="small text-secondary">Already have an account?</span>
+            <a href="{% url 'login' %}" class="soft-link small">Login</a>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100">
+            <i class="bi bi-person-check me-2"></i>Register
+        </button>
+    </form>
+</div>
+{% endblock %}

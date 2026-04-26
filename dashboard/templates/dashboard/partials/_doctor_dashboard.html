@@ -1,0 +1,149 @@
+<div class="role-dashboard">
+    <section class="dashboard-hero">
+        <div class="hero-content">
+            <div class="hero-kicker"><i class="bi bi-clipboard2-pulse"></i> Doctor Overview</div>
+            <h1>Guide today&apos;s clinical flow from one focused surface.</h1>
+            <p>Monitor the queue, prioritize consultations, and keep completed visits moving cleanly into follow-up.</p>
+        </div>
+        <div class="hero-actions">
+            <a href="#" class="dash-btn primary"><i class="bi bi-calendar-week"></i>Manage Schedule</a>
+            <a href="#" class="dash-btn secondary"><i class="bi bi-journal-medical"></i>Open Notes</a>
+        </div>
+    </section>
+
+    <section class="dashboard-metrics" aria-label="Doctor metrics">
+        <article class="metric-card">
+            <span class="metric-icon"><i class="bi bi-calendar2-check"></i></span>
+            <div>
+                <div class="metric-label">Total Appointments</div>
+                <div class="metric-value">{{ patients_today|default:"18" }}</div>
+                <div class="metric-note">Patients today</div>
+            </div>
+        </article>
+        <article class="metric-card">
+            <span class="metric-icon"><i class="bi bi-hourglass-split"></i></span>
+            <div>
+                <div class="metric-label">Upcoming</div>
+                <div class="metric-value">{{ pending_consultations|default:"11" }}</div>
+                <div class="metric-note">Waiting consults</div>
+            </div>
+        </article>
+        <article class="metric-card">
+            <span class="metric-icon"><i class="bi bi-check2-circle"></i></span>
+            <div>
+                <div class="metric-label">Completed</div>
+                <div class="metric-value">{{ completed_consultations|default:"7" }}</div>
+                <div class="metric-note">Finished today</div>
+            </div>
+        </article>
+        <article class="metric-card">
+            <span class="metric-icon"><i class="bi bi-broadcast"></i></span>
+            <div>
+                <div class="metric-label">Active</div>
+                <div class="metric-value">{{ active_consultations|default:"3" }}</div>
+                <div class="metric-note">In consultation</div>
+            </div>
+        </article>
+    </section>
+
+    <section class="dashboard-grid">
+        <div class="dashboard-stack">
+            <article class="panel-card">
+                <div class="panel-heading">
+                    <div>
+                        <h2 class="panel-title">Today&apos;s queue</h2>
+                        <p class="panel-subtitle">Patients waiting, checked in, and ready for consultation.</p>
+                    </div>
+                    <span class="section-kicker">Focus</span>
+                </div>
+
+                <div class="appointment-list">
+                    <div class="appointment-item">
+                        <div class="appointment-time">09:30</div>
+                        <span class="appointment-icon"><i class="bi bi-person-check"></i></span>
+                        <div>
+                            <div class="appointment-title">Mona Ali</div>
+                            <div class="appointment-meta">Follow-up - Exam room 2</div>
+                        </div>
+                        <span class="status-badge status-active">Active</span>
+                    </div>
+                    <div class="appointment-item">
+                        <div class="appointment-time">10:15</div>
+                        <span class="appointment-icon"><i class="bi bi-person-lines-fill"></i></span>
+                        <div>
+                            <div class="appointment-title">Youssef Adel</div>
+                            <div class="appointment-meta">Consultation - Waiting area</div>
+                        </div>
+                        <span class="status-badge status-pending">Pending</span>
+                    </div>
+                    <div class="appointment-item">
+                        <div class="appointment-time">11:00</div>
+                        <span class="appointment-icon"><i class="bi bi-clipboard2-check"></i></span>
+                        <div>
+                            <div class="appointment-title">Nour Samir</div>
+                            <div class="appointment-meta">Review - Confirmed slot</div>
+                        </div>
+                        <span class="status-badge status-confirmed">Confirmed</span>
+                    </div>
+                </div>
+            </article>
+
+            <article class="panel-card">
+                <div class="panel-heading">
+                    <div>
+                        <h2 class="panel-title">Clinic readiness</h2>
+                        <p class="panel-subtitle">Operational notes that help keep the care session moving.</p>
+                    </div>
+                    <span class="section-kicker">Flow</span>
+                </div>
+                <div class="mini-grid">
+                    <div class="mini-tile"><i class="bi bi-door-open me-2"></i>Three exam rooms are currently available</div>
+                    <div class="mini-tile"><i class="bi bi-capsule me-2"></i>Two patients may need medication review</div>
+                    <div class="mini-tile"><i class="bi bi-file-earmark-medical me-2"></i>Seven completed notes ready for closing</div>
+                </div>
+            </article>
+        </div>
+
+        <aside class="dashboard-stack">
+            <article class="side-card">
+                <div class="side-heading">
+                    <h2 class="side-title">Quick highlights</h2>
+                    <span class="section-kicker">Live</span>
+                </div>
+                <div class="highlight-list">
+                    <div class="highlight-item">
+                        <div>
+                            <div class="highlight-label">Current patient</div>
+                            <div class="highlight-value">Mona</div>
+                        </div>
+                        <span class="status-badge status-active">Active</span>
+                    </div>
+                    <div class="highlight-item">
+                        <div>
+                            <div class="highlight-label">Waiting patients</div>
+                            <div class="highlight-value">{{ pending_consultations|default:"11" }}</div>
+                        </div>
+                        <span class="status-badge status-pending">Pending</span>
+                    </div>
+                    <div class="highlight-item">
+                        <div>
+                            <div class="highlight-label">Completed consults</div>
+                            <div class="highlight-value">{{ completed_consultations|default:"7" }}</div>
+                        </div>
+                        <span class="status-badge status-confirmed">Good</span>
+                    </div>
+                </div>
+            </article>
+
+            <article class="side-card">
+                <h2 class="side-title">Quick actions</h2>
+                <p class="side-copy">Jump into the clinical tasks that usually need the fastest response.</p>
+                <div class="action-list">
+                    <a href="#" class="action-link featured"><span><i class="bi bi-journal-plus me-2"></i>Start consultation</span><i class="bi bi-plus"></i></a>
+                    <a href="#" class="action-link"><span><i class="bi bi-calendar-week me-2"></i>Adjust schedule</span><i class="bi bi-arrow-right"></i></a>
+                    <a href="#" class="action-link"><span><i class="bi bi-clipboard2-pulse me-2"></i>Review queue</span><i class="bi bi-arrow-right"></i></a>
+                </div>
+            </article>
+        </aside>
+    </section>
+</div>

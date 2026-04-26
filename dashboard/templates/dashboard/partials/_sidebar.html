@@ -1,0 +1,96 @@
+<aside class="dashboard-sidebar" aria-label="Dashboard navigation">
+    <div class="sidebar-brand">
+        <span class="sidebar-logo"><i class="bi bi-hospital"></i></span>
+        <div>
+            <div class="sidebar-kicker">Clinic Workspace</div>
+            <div class="sidebar-title">CareFlow Clinic</div>
+        </div>
+    </div>
+
+    <div class="sidebar-user">
+        <span class="sidebar-avatar"><i class="bi bi-person-badge"></i></span>
+        <div>
+            <div class="sidebar-name">{{ request.user.get_full_name|default:request.user.username }}</div>
+            <div class="sidebar-role">{{ request.user.role|title }}{% if request.user.email %} - {{ request.user.email }}{% endif %}</div>
+        </div>
+    </div>
+
+    <div class="sidebar-section-title">Workspace</div>
+    <nav class="sidebar-nav">
+        {% if request.user.role == 'PATIENT' %}
+            <a class="sidebar-link active" href="#">
+                <i class="bi bi-grid-1x2"></i>
+                <span><strong>Overview</strong><span>Care summary</span></span>
+            </a>
+            <a class="sidebar-link" href="#">
+                <i class="bi bi-calendar2-check"></i>
+                <span><strong>Appointments</strong><span>Upcoming visits</span></span>
+            </a>
+            <a class="sidebar-link" href="#">
+                <i class="bi bi-calendar-plus"></i>
+                <span><strong>Book Visit</strong><span>Find availability</span></span>
+            </a>
+            <a class="sidebar-link" href="#">
+                <i class="bi bi-file-medical"></i>
+                <span><strong>Medical Records</strong><span>Visit history</span></span>
+            </a>
+            <a class="sidebar-link" href="#">
+                <i class="bi bi-credit-card"></i>
+                <span><strong>Payments</strong><span>Bills and receipts</span></span>
+            </a>
+        {% elif request.user.role == 'DOCTOR' %}
+            <a class="sidebar-link active" href="#">
+                <i class="bi bi-grid-1x2"></i>
+                <span><strong>Overview</strong><span>Clinical flow</span></span>
+            </a>
+            <a class="sidebar-link" href="#">
+                <i class="bi bi-people"></i>
+                <span><strong>Daily Queue</strong><span>Patients waiting</span></span>
+            </a>
+            <a class="sidebar-link" href="#">
+                <i class="bi bi-calendar-week"></i>
+                <span><strong>Schedule</strong><span>Clinic sessions</span></span>
+            </a>
+            <a class="sidebar-link" href="#">
+                <i class="bi bi-journal-medical"></i>
+                <span><strong>Consultations</strong><span>Notes and plans</span></span>
+            </a>
+            <a class="sidebar-link" href="#">
+                <i class="bi bi-bar-chart"></i>
+                <span><strong>Analytics</strong><span>Care metrics</span></span>
+            </a>
+        {% elif request.user.role == 'RECEPTIONIST' %}
+            <a class="sidebar-link active" href="#">
+                <i class="bi bi-grid-1x2"></i>
+                <span><strong>Overview</strong><span>Desk command</span></span>
+            </a>
+            <a class="sidebar-link" href="#">
+                <i class="bi bi-kanban"></i>
+                <span><strong>Traffic Board</strong><span>Live queue</span></span>
+            </a>
+            <a class="sidebar-link" href="#">
+                <i class="bi bi-person-plus"></i>
+                <span><strong>Patients</strong><span>Register and approve</span></span>
+            </a>
+            <a class="sidebar-link" href="#">
+                <i class="bi bi-calendar-plus"></i>
+                <span><strong>Scheduling</strong><span>Create visits</span></span>
+            </a>
+            <a class="sidebar-link" href="#">
+                <i class="bi bi-receipt"></i>
+                <span><strong>Billing Desk</strong><span>Payments</span></span>
+            </a>
+        {% endif %}
+    </nav>
+
+    <div class="sidebar-bottom">
+        <a class="sidebar-link" href="#">
+            <i class="bi bi-person"></i>
+            <strong>Profile</strong>
+        </a>
+        <a class="sidebar-link logout" href="{% url 'logout' %}">
+            <i class="bi bi-box-arrow-right"></i>
+            <strong>Logout</strong>
+        </a>
+    </div>
+</aside>

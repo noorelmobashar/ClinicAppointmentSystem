@@ -1,0 +1,149 @@
+<div class="role-dashboard">
+    <section class="dashboard-hero">
+        <div class="hero-content">
+            <div class="hero-kicker"><i class="bi bi-kanban"></i> Reception Overview</div>
+            <h1>Keep the front desk queue moving and patient records clean.</h1>
+            <p>Coordinate arrivals, appointment creation, patient approvals, and live queue handoffs from one structured desk view.</p>
+        </div>
+        <div class="hero-actions">
+            <a href="#" class="dash-btn primary"><i class="bi bi-calendar-plus"></i>Create Appointment</a>
+            <a href="#" class="dash-btn secondary"><i class="bi bi-person-plus"></i>Add Walk-in</a>
+        </div>
+    </section>
+
+    <section class="dashboard-metrics" aria-label="Reception metrics">
+        <article class="metric-card">
+            <span class="metric-icon"><i class="bi bi-calendar2-check"></i></span>
+            <div>
+                <div class="metric-label">Total Appointments</div>
+                <div class="metric-value">{{ total_patients_today|default:"42" }}</div>
+                <div class="metric-note">Desk traffic today</div>
+            </div>
+        </article>
+        <article class="metric-card">
+            <span class="metric-icon"><i class="bi bi-clock"></i></span>
+            <div>
+                <div class="metric-label">Upcoming</div>
+                <div class="metric-value">{{ waiting_patients|default:"9" }}</div>
+                <div class="metric-note">Waiting patients</div>
+            </div>
+        </article>
+        <article class="metric-card">
+            <span class="metric-icon"><i class="bi bi-check2-circle"></i></span>
+            <div>
+                <div class="metric-label">Completed</div>
+                <div class="metric-value">{{ checked_in_patients|default:"16" }}</div>
+                <div class="metric-note">Checked in</div>
+            </div>
+        </article>
+        <article class="metric-card">
+            <span class="metric-icon"><i class="bi bi-broadcast"></i></span>
+            <div>
+                <div class="metric-label">Active</div>
+                <div class="metric-value">{{ active_appointments|default:"5" }}</div>
+                <div class="metric-note">Live clinic flow</div>
+            </div>
+        </article>
+    </section>
+
+    <section class="dashboard-grid">
+        <div class="dashboard-stack">
+            <article class="panel-card">
+                <div class="panel-heading">
+                    <div>
+                        <h2 class="panel-title">Today&apos;s appointments</h2>
+                        <p class="panel-subtitle">All doctor and patient traffic for the current desk shift.</p>
+                    </div>
+                    <span class="section-kicker">Focus</span>
+                </div>
+
+                <div class="appointment-list">
+                    <div class="appointment-item">
+                        <div class="appointment-time">09:00</div>
+                        <span class="appointment-icon"><i class="bi bi-person-check"></i></span>
+                        <div>
+                            <div class="appointment-title">Hana Mahmoud</div>
+                            <div class="appointment-meta">Dr. Sarah Ahmed - Cardiology</div>
+                        </div>
+                        <span class="status-badge status-active">Active</span>
+                    </div>
+                    <div class="appointment-item">
+                        <div class="appointment-time">10:30</div>
+                        <span class="appointment-icon"><i class="bi bi-calendar2-check"></i></span>
+                        <div>
+                            <div class="appointment-title">Karim Nabil</div>
+                            <div class="appointment-meta">Dr. Omar Hassan - Follow-up</div>
+                        </div>
+                        <span class="status-badge status-confirmed">Confirmed</span>
+                    </div>
+                    <div class="appointment-item">
+                        <div class="appointment-time">12:00</div>
+                        <span class="appointment-icon"><i class="bi bi-hourglass-split"></i></span>
+                        <div>
+                            <div class="appointment-title">Farah Tarek</div>
+                            <div class="appointment-meta">Dr. Laila Amin - New patient</div>
+                        </div>
+                        <span class="status-badge status-pending">Pending</span>
+                    </div>
+                </div>
+            </article>
+
+            <article class="panel-card">
+                <div class="panel-heading">
+                    <div>
+                        <h2 class="panel-title">Shift priorities</h2>
+                        <p class="panel-subtitle">Reception work that keeps appointments, rooms, and approvals in sync.</p>
+                    </div>
+                    <span class="section-kicker">Desk</span>
+                </div>
+                <div class="mini-grid">
+                    <div class="mini-tile"><i class="bi bi-person-exclamation me-2"></i>Three patient profiles still need confirmation</div>
+                    <div class="mini-tile"><i class="bi bi-door-open me-2"></i>Four rooms can accept immediate handoff</div>
+                    <div class="mini-tile"><i class="bi bi-receipt me-2"></i>Two invoices are ready for payment review</div>
+                </div>
+            </article>
+        </div>
+
+        <aside class="dashboard-stack">
+            <article class="side-card">
+                <div class="side-heading">
+                    <h2 class="side-title">Quick highlights</h2>
+                    <span class="section-kicker">Live</span>
+                </div>
+                <div class="highlight-list">
+                    <div class="highlight-item">
+                        <div>
+                            <div class="highlight-label">Available doctors</div>
+                            <div class="highlight-value">6</div>
+                        </div>
+                        <span class="status-badge status-confirmed">Good</span>
+                    </div>
+                    <div class="highlight-item">
+                        <div>
+                            <div class="highlight-label">Waiting patients</div>
+                            <div class="highlight-value">{{ waiting_patients|default:"9" }}</div>
+                        </div>
+                        <span class="status-badge status-pending">Pending</span>
+                    </div>
+                    <div class="highlight-item">
+                        <div>
+                            <div class="highlight-label">Checked in</div>
+                            <div class="highlight-value">{{ checked_in_patients|default:"16" }}</div>
+                        </div>
+                        <span class="status-badge status-live">Info</span>
+                    </div>
+                </div>
+            </article>
+
+            <article class="side-card">
+                <h2 class="side-title">Quick actions</h2>
+                <p class="side-copy">Use the overview as the starting point, then move into detailed desk tasks.</p>
+                <div class="action-list">
+                    <a href="#" class="action-link featured"><span><i class="bi bi-person-check me-2"></i>Check-in patient</span><i class="bi bi-plus"></i></a>
+                    <a href="#" class="action-link"><span><i class="bi bi-person-plus me-2"></i>Add walk-in</span><i class="bi bi-arrow-right"></i></a>
+                    <a href="#" class="action-link"><span><i class="bi bi-calendar-plus me-2"></i>Create appointment</span><i class="bi bi-arrow-right"></i></a>
+                </div>
+            </article>
+        </aside>
+    </section>
+</div>
