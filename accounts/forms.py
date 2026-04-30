@@ -24,3 +24,22 @@ class RegisterForm(forms.ModelForm):
             self.add_error('confirm_password', "Passwords do not match")
 
         return cleaned_data
+
+
+class ForgotPasswordForm(forms.Form):
+    email = forms.EmailField()
+
+
+class ResetPasswordForm(forms.Form):
+    new_password = forms.CharField()
+    confirm_password = forms.CharField()
+
+    def clean(self):
+        cleaned_data = super().clean()
+        new_password = cleaned_data.get("new_password")
+        confirm_password = cleaned_data.get("confirm_password")
+
+        if new_password != confirm_password:
+            self.add_error("confirm_password", "Passwords do not match")
+
+        return cleaned_data

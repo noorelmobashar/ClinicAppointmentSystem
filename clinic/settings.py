@@ -64,6 +64,21 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
+def clean_env(name, default=''):
+    return os.getenv(name, default).strip().strip("'\"")
+
+
+# Email settings
+EMAIL_HOST = clean_env('EMAIL_HOST')
+EMAIL_PORT = int(clean_env('EMAIL_PORT', '587'))
+EMAIL_USE_TLS = clean_env('EMAIL_USE_TLS', 'True') == 'True'
+EMAIL_HOST_USER = clean_env('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = clean_env('EMAIL_HOST_PASSWORD')
+DEFAULT_FROM_EMAIL = clean_env('DEFAULT_FROM_EMAIL', 'no-reply@clinic.local')
+EMAIL_BACKEND = clean_env('EMAIL_BACKEND')
+
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',

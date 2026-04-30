@@ -21,7 +21,7 @@
         </div>
     {% endif %}
 
-    <form method="post" novalidate>
+    <form method="post" novalidate id="register-form">
         {% csrf_token %}
         <div class="mb-3">
             <label for="username" class="form-label fw-bold">Username</label>
@@ -83,9 +83,24 @@
             <a href="{% url 'login' %}" class="soft-link small">Login</a>
         </div>
 
-        <button type="submit" class="btn btn-primary w-100">
-            <i class="bi bi-person-check me-2"></i>Register
+        <button type="submit" class="btn btn-primary w-100" id="register-submit">
+            <i class="bi bi-person-check me-2"></i><span>Register</span>
         </button>
     </form>
 </div>
+
+<script>
+    const registerForm = document.getElementById("register-form");
+    const registerSubmit = document.getElementById("register-submit");
+
+    if (registerForm && registerSubmit) {
+        registerForm.addEventListener("submit", () => {
+            registerSubmit.disabled = true;
+            const label = registerSubmit.querySelector("span");
+            if (label) {
+                label.textContent = "Registering...";
+            }
+        });
+    }
+</script>
 {% endblock %}

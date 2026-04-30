@@ -1,0 +1,24 @@
+{% extends "base_auth.html" %}
+
+{% block title %}Account Activated | Clinic System{% endblock %}
+
+{% block content %}
+<div class="auth-card p-4 p-sm-5">
+    <div class="text-center">
+        <div class="brand-mark mx-auto mb-3">
+            <i class="bi bi-check2-circle"></i>
+        </div>
+        <div class="small text-uppercase fw-bold text-primary mb-2" style="letter-spacing: .2em;">Verification complete</div>
+        <h1 class="h3 fw-bold mb-2">Your account is active</h1>
+        <p class="text-secondary mb-4">You can now sign in and access your clinic workspace.</p>
+    </div>
+
+    <div class="alert alert-success rounded-4 mb-4" role="alert">
+        Email verification succeeded. Your account has been activated successfully.
+    </div>
+
+    <a href="{% url 'login' %}" class="btn btn-primary w-100">
+        <i class="bi bi-box-arrow-in-right me-2"></i>Go to Login
+    </a>
+</div>
+{% endblock %}
