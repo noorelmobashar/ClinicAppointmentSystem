@@ -37,9 +37,11 @@ class AppointmentSlot(models.Model):
     end_time = models.TimeField()
     is_booked = models.BooleanField(default=False)
 
+    class Meta:
+        unique_together = ['doctor', 'date', 'start_time']
+
     def __str__(self):
         return f"{self.doctor} - {self.date} {self.start_time}"
-
 
 class Appointment(models.Model):
     class Status(models.TextChoices):
@@ -55,16 +57,26 @@ class Appointment(models.Model):
         on_delete=models.CASCADE,
         related_name="appointments",
     )
+
+    doctor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="doctor_appointments",
+    )
+
     slot = models.OneToOneField(
         AppointmentSlot,
         on_delete=models.CASCADE,
         related_name="appointment",
     )
+
     status = models.CharField(
         max_length=20,
         choices=Status.choices,
         default=Status.REQUESTED,
     )
+
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.patient} - {self.slot}"

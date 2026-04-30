@@ -1,0 +1,411 @@
+{% extends "base.html" %}
+
+{% block title %}My Appointments | Clinic System{% endblock %}
+
+{% block extra_css %}
+{% include "dashboard/partials/_dashboard_styles.html" %}
+<style>
+    .appointments-shell {
+        padding-bottom: 2rem;
+    }
+
+    .appointments-hero {
+        padding: clamp(2rem, 4vw, 3.2rem);
+        border-radius: 30px;
+        color: #fff;
+        background:
+            radial-gradient(circle at top right, rgba(255, 255, 255, 0.18), transparent 16rem),
+            linear-gradient(135deg, #1d4ed8, #0891b2 54%, #0f766e);
+        box-shadow: 0 28px 64px rgba(8, 145, 178, 0.24);
+    }
+
+    .hero-badge,
+    .stat-label,
+    .tab-kicker,
+    .status-pill {
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+    }
+
+    .hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        min-height: 2rem;
+        padding: 0 0.85rem;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.14);
+        font-size: 0.74rem;
+        font-weight: 800;
+    }
+
+    .appointments-hero h1 {
+        margin: 1rem 0 0.75rem;
+        font-size: clamp(2rem, 4.5vw, 3.15rem);
+        font-weight: 800;
+        line-height: 1.06;
+    }
+
+    .appointments-hero p {
+        max-width: 42rem;
+        margin: 0;
+        color: rgba(255, 255, 255, 0.82);
+        line-height: 1.7;
+    }
+
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1rem;
+        margin-top: 1.75rem;
+    }
+
+    .stat-card {
+        padding: 1rem 1.05rem;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.11);
+    }
+
+    .stat-label {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.72rem;
+        font-weight: 800;
+    }
+
+    .stat-value {
+        margin-top: 0.55rem;
+        font-size: 1.6rem;
+        font-weight: 800;
+        line-height: 1;
+    }
+
+    .appointments-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.55fr) minmax(18rem, 0.95fr);
+        gap: 1.5rem;
+        margin-top: 1.75rem;
+        align-items: start;
+    }
+
+    .appointments-stack {
+        display: grid;
+        gap: 1.5rem;
+    }
+
+    .panel-card {
+        padding: 1.6rem;
+        border: 1px solid rgba(148, 163, 184, 0.22);
+        border-radius: 26px;
+        background: rgba(255, 255, 255, 0.94);
+        box-shadow: 0 20px 46px rgba(15, 23, 42, 0.08);
+    }
+
+    .panel-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .tab-kicker {
+        display: inline-flex;
+        align-items: center;
+        min-height: 2rem;
+        padding: 0 0.85rem;
+        border-radius: 999px;
+        background: #dbeafe;
+        color: var(--clinic-primary-strong);
+        font-size: 0.72rem;
+        font-weight: 800;
+    }
+
+    .panel-head h2,
+    .side-panel h2 {
+        margin: 0.8rem 0 0;
+        font-size: 1.2rem;
+        font-weight: 800;
+    }
+
+    .panel-head p,
+    .side-panel p {
+        margin: 0.45rem 0 0;
+        color: var(--clinic-muted);
+        line-height: 1.65;
+    }
+
+    .appointment-list {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .appointment-card {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        gap: 1rem;
+        align-items: center;
+        padding: 1rem;
+        border: 1px solid rgba(148, 163, 184, 0.18);
+        border-radius: 22px;
+        background: linear-gradient(180deg, rgba(248, 250, 252, 0.88), #fff);
+    }
+
+    .appointment-date {
+        min-width: 5rem;
+        padding: 0.95rem 0.7rem;
+        border-radius: 18px;
+        color: var(--clinic-primary-strong);
+        background: #eff6ff;
+        text-align: center;
+        font-weight: 800;
+        line-height: 1.1;
+    }
+
+    .appointment-date span {
+        display: block;
+        margin-top: 0.2rem;
+        color: var(--clinic-muted);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+    }
+
+    .appointment-title {
+        font-size: 1.05rem;
+        font-weight: 800;
+    }
+
+    .appointment-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.65rem 1rem;
+        margin-top: 0.45rem;
+        color: var(--clinic-muted);
+        font-size: 0.93rem;
+    }
+
+    .appointment-meta span {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+
+    .status-pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 2rem;
+        padding: 0 0.85rem;
+        border-radius: 999px;
+        font-size: 0.72rem;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    .status-REQUESTED,
+    .status-AWAITING_PAYMENT {
+        color: #9a6700;
+        background: #fef3c7;
+    }
+
+    .status-CONFIRMED,
+    .status-CHECKED_IN,
+    .status-COMPLETED {
+        color: #166534;
+        background: #dcfce7;
+    }
+
+    .status-CANCELLED {
+        color: #b91c1c;
+        background: #fee2e2;
+    }
+
+    .empty-card,
+    .tip-card,
+    .action-card {
+        padding: 1.15rem;
+        border: 1px dashed rgba(148, 163, 184, 0.42);
+        border-radius: 20px;
+        color: var(--clinic-muted);
+        background: #fff;
+    }
+
+    .side-panel {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .tip-card,
+    .action-card {
+        border-style: solid;
+        box-shadow: 0 16px 34px rgba(15, 23, 42, 0.06);
+    }
+
+    .tip-list {
+        display: grid;
+        gap: 0.8rem;
+        margin: 0.95rem 0 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .tip-list li {
+        display: flex;
+        gap: 0.7rem;
+        line-height: 1.55;
+    }
+
+    .tip-list i {
+        color: #0891b2;
+    }
+
+    @media (max-width: 991.98px) {
+        .appointments-grid,
+        .stats-row {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 767.98px) {
+        .appointment-card {
+            grid-template-columns: 1fr;
+            justify-items: start;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-shell">
+    {% include "dashboard/partials/_sidebar.html" %}
+    <div class="dashboard-main">
+        {% include "dashboard/partials/_topbar.html" %}
+
+        <section class="appointments-shell">
+            <section class="appointments-hero">
+                <span class="hero-badge"><i class="bi bi-journal-check"></i> Appointment Center</span>
+                <h1>Track upcoming visits and look back at previous appointments.</h1>
+                <p>
+                    This page is connected to the appointment history view and separates future visits from past ones
+                    so patients can quickly understand what still needs attention.
+                </p>
+
+                <div class="stats-row">
+                    <div class="stat-card">
+                        <div class="stat-label">Upcoming</div>
+                        <div class="stat-value">{{ upcoming|length }}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">History</div>
+                        <div class="stat-value">{{ history|length }}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Patient</div>
+                        <div class="stat-value">{{ request.user.username }}</div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="appointments-grid">
+                <div class="appointments-stack">
+                    <section class="panel-card">
+                        <div class="panel-head">
+                            <div>
+                                <span class="tab-kicker">Upcoming Visits</span>
+                                <h2>Appointments that still need your attention</h2>
+                                <p>Keep an eye on scheduled times, assigned doctors, and payment-related statuses.</p>
+                            </div>
+                        </div>
+
+                        <div class="appointment-list">
+                            {% for appointment in upcoming %}
+                                <article class="appointment-card">
+                                    <div class="appointment-date">
+                                        {{ appointment.slot.date|date:"d" }}
+                                        <span>{{ appointment.slot.date|date:"M Y" }}</span>
+                                    </div>
+                                    <div>
+                                        <div class="appointment-title">
+                                            Dr. {{ appointment.doctor.get_full_name|default:appointment.doctor.username }}
+                                        </div>
+                                        <div class="appointment-meta">
+                                            <span><i class="bi bi-clock"></i>{{ appointment.slot.start_time|time:"H:i" }} - {{ appointment.slot.end_time|time:"H:i" }}</span>
+                                            <span><i class="bi bi-calendar3"></i>{{ appointment.slot.date|date:"l" }}</span>
+                                            <span><i class="bi bi-receipt"></i>Created {{ appointment.created_at|date:"M d, Y" }}</span>
+                                        </div>
+                                    </div>
+                                    <span class="status-pill status-{{ appointment.status }}">{{ appointment.get_status_display }}</span>
+                                </article>
+                            {% empty %}
+                                <div class="empty-card">
+                                    No upcoming appointments yet. Once you book a visit, it will appear here.
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </section>
+
+                    <section class="panel-card">
+                        <div class="panel-head">
+                            <div>
+                                <span class="tab-kicker">History</span>
+                                <h2>Past appointments</h2>
+                                <p>A clean archive for follow-up, review, and future rebooking decisions.</p>
+                            </div>
+                        </div>
+
+                        <div class="appointment-list">
+                            {% for appointment in history %}
+                                <article class="appointment-card">
+                                    <div class="appointment-date">
+                                        {{ appointment.slot.date|date:"d" }}
+                                        <span>{{ appointment.slot.date|date:"M Y" }}</span>
+                                    </div>
+                                    <div>
+                                        <div class="appointment-title">
+                                            Dr. {{ appointment.doctor.get_full_name|default:appointment.doctor.username }}
+                                        </div>
+                                        <div class="appointment-meta">
+                                            <span><i class="bi bi-clock-history"></i>{{ appointment.slot.start_time|time:"H:i" }} - {{ appointment.slot.end_time|time:"H:i" }}</span>
+                                            <span><i class="bi bi-check2-square"></i>{{ appointment.get_status_display }}</span>
+                                        </div>
+                                    </div>
+                                    <span class="status-pill status-{{ appointment.status }}">{{ appointment.get_status_display }}</span>
+                                </article>
+                            {% empty %}
+                                <div class="empty-card">
+                                    No appointment history is available yet.
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </section>
+                </div>
+
+                <aside class="side-panel">
+                    <section class="panel-card">
+                        <h2>Need a new appointment?</h2>
+                        <p>Use the booking page to check fresh slot availability and confirm the next visit.</p>
+                        <a class="btn btn-primary w-100 mt-3" href="{% url 'patient-booking' %}">
+                            <i class="bi bi-calendar-plus me-1"></i>Book appointment
+                        </a>
+                    </section>
+
+                    <section class="tip-card">
+                        <h2 class="h5 mb-0">Helpful reminders</h2>
+                        <ul class="tip-list">
+                            <li><i class="bi bi-check2-circle"></i><span>Confirmed appointments are usually ready for visit-day check-in.</span></li>
+                            <li><i class="bi bi-check2-circle"></i><span>Awaiting payment means the booking exists but still needs payment follow-up.</span></li>
+                            <li><i class="bi bi-check2-circle"></i><span>Review your appointment history before scheduling a follow-up consultation.</span></li>
+                        </ul>
+                    </section>
+
+                    <section class="action-card">
+                        <h2 class="h5 mb-0">Account snapshot</h2>
+                        <p class="mt-2 mb-0">Signed in as <strong>{{ request.user.get_full_name|default:request.user.username }}</strong>.</p>
+                    </section>
+                </aside>
+            </div>
+        </section>
+    </div>
+</div>
+{% endblock %}

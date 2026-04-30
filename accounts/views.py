@@ -29,7 +29,7 @@ class CustomLoginView(View):
             try:
                 user = CustomUser.objects.get(email=email,is_active=True)
             except CustomUser.DoesNotExist:
-                form.add_error(None, "Invalid email or password or account not activated")
+                form.add_error(None, "Invalid email or password")
                 return render(request, 'accounts/login.html', {'form': form})
 
             if not check_password(password, user.password):

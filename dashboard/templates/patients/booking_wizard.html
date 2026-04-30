@@ -1,0 +1,524 @@
+{% extends "base.html" %}
+
+{% block title %}Book Appointment | Clinic System{% endblock %}
+
+{% block extra_css %}
+{% include "dashboard/partials/_dashboard_styles.html" %}
+<style>
+    .booking-shell {
+        padding-bottom: 2rem;
+    }
+
+    .booking-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.45fr) minmax(19rem, 0.9fr);
+        gap: 1.5rem;
+        align-items: start;
+    }
+
+    .booking-main,
+    .booking-side {
+        display: grid;
+        gap: 1.5rem;
+    }
+
+    .wizard-card {
+        border: 1px solid rgba(148, 163, 184, 0.22);
+        border-radius: 28px;
+        background: rgba(255, 255, 255, 0.94);
+        box-shadow: 0 22px 56px rgba(15, 23, 42, 0.09);
+    }
+
+    .wizard-hero {
+        padding: clamp(2rem, 4vw, 3rem);
+        color: #fff;
+        background:
+            radial-gradient(circle at left top, rgba(255, 255, 255, 0.24), transparent 20rem),
+            linear-gradient(135deg, #0f172a, #1d4ed8 56%, #06b6d4);
+    }
+
+    .wizard-kicker,
+    .step-badge,
+    .info-label {
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+    }
+
+    .wizard-kicker {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        min-height: 2rem;
+        padding: 0 0.85rem;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.14);
+        font-size: 0.74rem;
+        font-weight: 800;
+    }
+
+    .wizard-hero h1 {
+        margin: 1rem 0 0.8rem;
+        font-size: clamp(1.9rem, 4vw, 3rem);
+        font-weight: 800;
+        line-height: 1.08;
+    }
+
+    .wizard-hero p {
+        max-width: 40rem;
+        margin: 0;
+        color: rgba(255, 255, 255, 0.78);
+        line-height: 1.7;
+    }
+
+    .steps-row {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1rem;
+        margin-top: 1.6rem;
+    }
+
+    .step-card {
+        padding: 1rem;
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .step-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2rem;
+        height: 2rem;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.18);
+        font-size: 0.74rem;
+        font-weight: 800;
+    }
+
+    .step-title {
+        margin-top: 0.9rem;
+        font-size: 1rem;
+        font-weight: 800;
+    }
+
+    .step-copy {
+        margin-top: 0.35rem;
+        color: rgba(255, 255, 255, 0.72);
+        font-size: 0.92rem;
+        line-height: 1.55;
+    }
+
+    .booking-body {
+        padding: 1.6rem;
+    }
+
+    .section-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1.35rem;
+    }
+
+    .section-head h2,
+    .booking-side h2 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 800;
+    }
+
+    .section-head p,
+    .side-copy {
+        margin: 0.45rem 0 0;
+        color: var(--clinic-muted);
+        line-height: 1.65;
+    }
+
+    .field-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+    }
+
+    .field-block label {
+        display: block;
+        margin-bottom: 0.45rem;
+        font-weight: 800;
+    }
+
+    .slot-panel {
+        margin-top: 1.3rem;
+        padding: 1.25rem;
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        border-radius: 24px;
+        background: linear-gradient(180deg, rgba(239, 246, 255, 0.85), rgba(255, 255, 255, 0.95));
+    }
+
+    .slot-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.9rem;
+        margin-top: 1rem;
+    }
+
+    .slot-button {
+        width: 100%;
+        min-height: 4rem;
+        border: 1px solid rgba(37, 99, 235, 0.16);
+        border-radius: 18px;
+        color: #1d4ed8;
+        background: #fff;
+        font-weight: 800;
+        transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+    }
+
+    .slot-button:hover,
+    .slot-button:focus {
+        transform: translateY(-2px);
+        border-color: rgba(37, 99, 235, 0.4);
+        box-shadow: 0 16px 28px rgba(37, 99, 235, 0.12);
+    }
+
+    .slot-button.active {
+        color: #fff;
+        border-color: #1d4ed8;
+        background: linear-gradient(135deg, #2563eb, #0891b2);
+        box-shadow: 0 16px 32px rgba(37, 99, 235, 0.22);
+    }
+
+    .slot-empty {
+        padding: 1.15rem;
+        border: 1px dashed rgba(148, 163, 184, 0.45);
+        border-radius: 18px;
+        color: var(--clinic-muted);
+        text-align: center;
+    }
+
+    .booking-side-card {
+        padding: 1.5rem;
+    }
+
+    .summary-card {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .summary-item {
+        padding: 1rem;
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        border-radius: 20px;
+        background: #fff;
+    }
+
+    .info-label {
+        color: #94a3b8;
+        font-size: 0.72rem;
+        font-weight: 800;
+    }
+
+    .info-value {
+        margin-top: 0.45rem;
+        font-size: 1.05rem;
+        font-weight: 800;
+        color: var(--clinic-text);
+        word-break: break-word;
+    }
+
+    .summary-action {
+        width: 100%;
+    }
+
+    .mini-list {
+        display: grid;
+        gap: 0.8rem;
+        margin: 1rem 0 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .mini-list li {
+        display: flex;
+        gap: 0.7rem;
+        color: var(--clinic-muted);
+        line-height: 1.55;
+    }
+
+    .mini-list i {
+        color: #0891b2;
+    }
+
+    @media (max-width: 991.98px) {
+        .booking-grid,
+        .steps-row,
+        .field-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 767.98px) {
+        .slot-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 575.98px) {
+        .slot-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-shell">
+    {% include "dashboard/partials/_sidebar.html" %}
+    <div class="dashboard-main">
+        {% include "dashboard/partials/_topbar.html" %}
+
+        <section class="booking-shell">
+            <div class="booking-grid">
+                <div class="booking-main">
+                    <section class="wizard-card wizard-hero">
+                        <span class="wizard-kicker"><i class="bi bi-calendar-plus"></i> Appointment Booking</span>
+                        <h1>Choose a doctor, find an open time, and confirm the visit.</h1>
+                        <p>
+                            This page uses the existing slot API in the project. Pick a doctor and date first,
+                            then the available times will load automatically.
+                        </p>
+
+                        <div class="steps-row">
+                            <article class="step-card">
+                                <span class="step-badge">1</span>
+                                <div class="step-title">Select doctor</div>
+                                <div class="step-copy">Start with the clinician you want to visit.</div>
+                            </article>
+                            <article class="step-card">
+                                <span class="step-badge">2</span>
+                                <div class="step-title">Pick a date</div>
+                                <div class="step-copy">The page requests free slots for that day only.</div>
+                            </article>
+                            <article class="step-card">
+                                <span class="step-badge">3</span>
+                                <div class="step-title">Confirm slot</div>
+                                <div class="step-copy">Booking is sent directly to the appointment endpoint.</div>
+                            </article>
+                        </div>
+                    </section>
+
+                    <section class="wizard-card booking-body">
+                        <div class="section-head">
+                            <div>
+                                <h2>Booking Form</h2>
+                                <p>Fields stay lightweight so the user can move from selection to confirmation quickly.</p>
+                            </div>
+                        </div>
+
+                        <form id="bookingWizardForm" novalidate>
+                            <div class="field-grid">
+                                <div class="field-block">
+                                    <label for="doctorSelect">Doctor</label>
+                                    <select class="form-select" id="doctorSelect" required>
+                                        <option value="">Select a doctor</option>
+                                        {% for doctor in doctors %}
+                                            <option value="{{ doctor.id }}">
+                                                {% if doctor.doctor_profile %}
+                                                    {{ doctor.doctor_profile }}
+                                                {% else %}
+                                                    Dr. {{ doctor.get_full_name|default:doctor.username }}
+                                                {% endif %}
+                                            </option>
+                                        {% empty %}
+                                            <option value="">No doctors are available right now</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="field-block">
+                                    <label for="appointmentDate">Date</label>
+                                    <input class="form-control" type="date" id="appointmentDate" required>
+                                </div>
+                            </div>
+
+                            <div class="slot-panel">
+                                <div class="section-head mb-0">
+                                    <div>
+                                        <h2 class="h5 mb-0">Available Time Slots</h2>
+                                        <p class="mb-0">Choose a doctor and date to load the current free times.</p>
+                                    </div>
+                                </div>
+
+                                <div id="slotFeedback" class="slot-empty mt-3">
+                                    Select both fields to load appointment times.
+                                </div>
+                                <div id="slotGrid" class="slot-grid d-none"></div>
+                            </div>
+                        </form>
+                    </section>
+                </div>
+
+                <aside class="booking-side">
+                    <section class="wizard-card booking-side-card">
+                        <h2>Booking Summary</h2>
+                        <p class="side-copy">The right panel updates as the patient moves through the flow.</p>
+
+                        <div class="summary-card mt-4">
+                            <div class="summary-item">
+                                <div class="info-label">Patient</div>
+                                <div class="info-value">{{ request.user.get_full_name|default:request.user.username }}</div>
+                            </div>
+                            <div class="summary-item">
+                                <div class="info-label">Doctor</div>
+                                <div class="info-value" id="summaryDoctor">Not selected</div>
+                            </div>
+                            <div class="summary-item">
+                                <div class="info-label">Date</div>
+                                <div class="info-value" id="summaryDate">Not selected</div>
+                            </div>
+                            <div class="summary-item">
+                                <div class="info-label">Time</div>
+                                <div class="info-value" id="summaryTime">Not selected</div>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-primary summary-action mt-4" id="confirmBookingBtn" type="button" disabled>
+                            <i class="bi bi-check2-circle me-1"></i>Confirm appointment
+                        </button>
+
+                        <div id="bookingResult" class="mt-3 text-muted small"></div>
+                    </section>
+
+                    <section class="wizard-card booking-side-card">
+                        <h2>Before Confirming</h2>
+                        <p class="side-copy">A few useful reminders to keep the visit smoother for both patient and clinic.</p>
+
+                        <ul class="mini-list">
+                            <li><i class="bi bi-check2-circle"></i><span>Double-check the doctor and selected date before confirming.</span></li>
+                            <li><i class="bi bi-check2-circle"></i><span>Bring relevant reports or a short note about current symptoms.</span></li>
+                            <li><i class="bi bi-check2-circle"></i><span>Use the appointments page after booking to review upcoming visits.</span></li>
+                        </ul>
+
+                        <a class="btn btn-outline-primary w-100 mt-4" href="{% url 'my-appointments' %}">
+                            <i class="bi bi-journal-medical me-1"></i>Open my appointments
+                        </a>
+                    </section>
+                </aside>
+            </div>
+        </section>
+    </div>
+</div>
+
+<script>
+    (function () {
+        const doctorSelect = document.getElementById("doctorSelect");
+        const dateInput = document.getElementById("appointmentDate");
+        const slotGrid = document.getElementById("slotGrid");
+        const slotFeedback = document.getElementById("slotFeedback");
+        const confirmButton = document.getElementById("confirmBookingBtn");
+        const bookingResult = document.getElementById("bookingResult");
+        const summaryDoctor = document.getElementById("summaryDoctor");
+        const summaryDate = document.getElementById("summaryDate");
+        const summaryTime = document.getElementById("summaryTime");
+
+        let selectedSlotId = null;
+        let selectedSlotTime = null;
+
+        function updateSummary() {
+            const doctorLabel = doctorSelect.options[doctorSelect.selectedIndex]?.text || "Not selected";
+            summaryDoctor.textContent = doctorSelect.value ? doctorLabel.trim() : "Not selected";
+            summaryDate.textContent = dateInput.value || "Not selected";
+            summaryTime.textContent = selectedSlotTime || "Not selected";
+            confirmButton.disabled = !(doctorSelect.value && dateInput.value && selectedSlotId);
+        }
+
+        function resetSlots(message) {
+            selectedSlotId = null;
+            selectedSlotTime = null;
+            slotGrid.innerHTML = "";
+            slotGrid.classList.add("d-none");
+            slotFeedback.textContent = message;
+            slotFeedback.classList.remove("d-none");
+            bookingResult.textContent = "";
+            updateSummary();
+        }
+
+        async function loadSlots() {
+            if (!doctorSelect.value || !dateInput.value) {
+                resetSlots("Select both fields to load appointment times.");
+                return;
+            }
+
+            resetSlots("Loading available slots...");
+
+            try {
+                const url = `{% url 'available-slots' %}?doctor=${encodeURIComponent(doctorSelect.value)}&date=${encodeURIComponent(dateInput.value)}`;
+                const response = await fetch(url, { headers: { "X-Requested-With": "XMLHttpRequest" } });
+                const slots = await response.json();
+
+                if (!Array.isArray(slots) || slots.length === 0) {
+                    resetSlots("No open slots were found for this doctor on the selected date.");
+                    return;
+                }
+
+                slotFeedback.classList.add("d-none");
+                slotGrid.classList.remove("d-none");
+
+                slots.forEach((slot) => {
+                    const button = document.createElement("button");
+                    button.type = "button";
+                    button.className = "slot-button";
+                    button.textContent = slot.time;
+                    button.addEventListener("click", function () {
+                        document.querySelectorAll(".slot-button").forEach((item) => item.classList.remove("active"));
+                        button.classList.add("active");
+                        selectedSlotId = slot.id;
+                        selectedSlotTime = slot.time;
+                        bookingResult.textContent = "";
+                        updateSummary();
+                    });
+                    slotGrid.appendChild(button);
+                });
+            } catch (error) {
+                resetSlots("Could not load slots. Please try again.");
+            }
+        }
+
+        async function bookSlot() {
+            if (!selectedSlotId) {
+                return;
+            }
+
+            bookingResult.textContent = "Submitting booking...";
+
+            try {
+                const response = await fetch(`/appointments/book/${selectedSlotId}/`, {
+                    method: "POST",
+                    headers: {
+                        "X-CSRFToken": "{{ csrf_token }}",
+                        "X-Requested-With": "XMLHttpRequest"
+                    }
+                });
+
+                const text = await response.text();
+                bookingResult.textContent = text;
+
+                if (response.ok && text.toLowerCase().includes("success")) {
+                    loadSlots();
+                }
+            } catch (error) {
+                bookingResult.textContent = "Booking failed. Please try again.";
+            }
+        }
+
+        doctorSelect.addEventListener("change", function () {
+            selectedSlotId = null;
+            selectedSlotTime = null;
+            updateSummary();
+            loadSlots();
+        });
+
+        dateInput.addEventListener("change", loadSlots);
+        confirmButton.addEventListener("click", bookSlot);
+        updateSummary();
+    }());
+</script>
+{% endblock %}
