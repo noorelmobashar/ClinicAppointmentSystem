@@ -1,26 +1,76 @@
 <style>
-    .dashboard-shell {
-        min-height: calc(100vh - 74px);
-        position: relative;
+    :root {
+        --dash-bg: #f1f5f9;
+        --dash-surface: #ffffff;
+        --dash-sidebar: #f8fafc;
+        --dash-text: #0f172a;
+        --dash-muted: #64748b;
+        --dash-soft: #f8fafc;
+        --dash-border: rgba(148, 163, 184, 0.24);
+        --dash-shadow: 0 22px 60px rgba(15, 23, 42, 0.09);
+        --dash-shadow-soft: 0 12px 34px rgba(15, 23, 42, 0.07);
+        --dash-radius: 22px;
+        --role-primary: #2563eb;
+        --role-secondary: #06b6d4;
+        --role-accent: #dbeafe;
+        --role-wash: rgba(37, 99, 235, 0.14);
     }
 
-    .dashboard-sidebar {
-        width: 280px;
-        min-height: calc(100vh - 74px);
-        position: fixed;
-        left: 0;
-        top: 74px;
-        z-index: 20;
-        padding: 1.25rem;
-        background: rgba(255, 255, 255, 0.94);
-        border-right: 1px solid rgba(229, 231, 235, 0.9);
-        box-shadow: 12px 0 34px rgba(15, 23, 42, 0.05);
-        backdrop-filter: blur(16px);
+    .clinic-header,
+    .clinic-footer {
+        display: none;
+    }
+
+    body {
+        background: var(--dash-bg);
+        color: var(--dash-text);
+    }
+
+    .dashboard-shell {
+        min-height: 100vh;
+        background:
+            radial-gradient(circle at 16% 0%, var(--role-wash), transparent 30rem),
+            linear-gradient(120deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.62)),
+            var(--dash-bg);
+    }
+
+    .dashboard-shell.role-doctor {
+        --role-primary: #059669;
+        --role-secondary: #14b8a6;
+        --role-accent: #d1fae5;
+        --role-wash: rgba(20, 184, 166, 0.18);
+    }
+
+    .dashboard-shell.role-reception {
+        --role-primary: #f97316;
+        --role-secondary: #ef4444;
+        --role-accent: #ffedd5;
+        --role-wash: rgba(249, 115, 22, 0.18);
     }
 
     .dashboard-main {
-        margin-left: 280px;
-        padding: 1.5rem;
+        margin-left: 300px;
+        min-height: 100vh;
+        padding: 34px clamp(22px, 4vw, 64px) 56px;
+    }
+
+    .dashboard-content {
+        width: min(100%, 1380px);
+        margin: 0 auto;
+    }
+
+    .dashboard-sidebar {
+        position: fixed;
+        inset: 0 auto 0 0;
+        z-index: 30;
+        width: 300px;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        padding: 24px 16px;
+        background: var(--dash-sidebar);
+        border-right: 1px solid rgba(203, 213, 225, 0.74);
+        box-shadow: 18px 0 44px rgba(15, 23, 42, 0.05);
     }
 
     .dashboard-topbar {
@@ -30,94 +80,189 @@
         box-shadow: 0 14px 34px rgba(15, 23, 42, 0.06);
     }
 
+    .sidebar-brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 2px 4px 22px;
+    }
+
+    .sidebar-logo {
+        width: 42px;
+        height: 42px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 15px;
+        color: #ffffff;
+        background: linear-gradient(135deg, var(--role-primary), var(--role-secondary));
+        box-shadow: 0 14px 26px rgba(15, 23, 42, 0.14);
+    }
+
+    .sidebar-kicker,
+    .section-kicker,
+    .hero-kicker,
+    .metric-label {
+        letter-spacing: 0.28em;
+        text-transform: uppercase;
+    }
+
+    .sidebar-kicker {
+        color: var(--role-primary);
+        font-size: 0.66rem;
+        font-weight: 900;
+    }
+
+    .sidebar-title {
+        color: var(--dash-text);
+        font-size: 1.08rem;
+        font-weight: 900;
+        line-height: 1.15;
+    }
+
+    .sidebar-user {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px;
+        margin-bottom: 28px;
+        border: 1px solid var(--dash-border);
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.88);
+        box-shadow: var(--dash-shadow-soft);
+    }
+
+    .sidebar-avatar {
+        width: 44px;
+        height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+        border-radius: 16px;
+        color: var(--role-primary);
+        background: var(--role-accent);
+    }
+
+    .sidebar-name {
+        color: var(--dash-text);
+        font-weight: 900;
+        line-height: 1.15;
+    }
+
+    .sidebar-role {
+        color: var(--dash-muted);
+        font-size: 0.82rem;
+        font-weight: 700;
+        word-break: break-word;
+    }
+
+    .sidebar-section-title {
+        margin: 0 4px 10px;
+        color: #94a3b8;
+        font-size: 0.68rem;
+        font-weight: 900;
+        letter-spacing: 0.34em;
+        text-transform: uppercase;
+    }
+
     .sidebar-nav {
         display: grid;
-        gap: 0.35rem;
+        gap: 8px;
     }
 
     .sidebar-link {
         display: flex;
         align-items: center;
-        gap: 0.75rem;
-        min-height: 2.9rem;
-        padding: 0.7rem 0.9rem;
-        border-radius: 14px;
-        color: #4b5563;
-        font-weight: 800;
+        gap: 12px;
+        min-height: 50px;
+        padding: 10px 12px;
+        border: 1px solid transparent;
+        border-radius: 16px;
+        color: #475569;
         text-decoration: none;
-        transition: color 160ms ease, background 160ms ease, transform 160ms ease;
+        transition: transform 180ms ease, background 180ms ease, border-color 180ms ease, color 180ms ease;
     }
 
     .sidebar-link i {
-        width: 1.25rem;
-        color: #3b82f6;
-        font-size: 1.05rem;
+        width: 34px;
+        height: 34px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+        border-radius: 13px;
+        color: var(--role-primary);
+        background: rgba(241, 245, 249, 0.95);
+        transition: background 180ms ease, color 180ms ease;
+    }
+
+    .sidebar-link strong {
+        display: block;
+        color: #334155;
+        font-size: 0.94rem;
+        font-weight: 900;
+        line-height: 1.1;
+    }
+
+    .sidebar-link span {
+        display: block;
+        color: #94a3b8;
+        font-size: 0.74rem;
+        font-weight: 700;
+        line-height: 1.2;
     }
 
     .sidebar-link:hover,
     .sidebar-link:focus,
     .sidebar-link.active {
-        color: #1d4ed8;
-        background: #eff6ff;
-        transform: translateX(2px);
+        color: var(--role-primary);
+        border-color: color-mix(in srgb, var(--role-primary) 28%, transparent);
+        background: color-mix(in srgb, var(--role-accent) 55%, white);
+        transform: translateX(3px);
+    }
+
+    .sidebar-link:hover strong,
+    .sidebar-link:focus strong,
+    .sidebar-link.active strong {
+        color: var(--role-primary);
+    }
+
+    .sidebar-link:hover i,
+    .sidebar-link:focus i,
+    .sidebar-link.active i {
+        color: #ffffff;
+        background: linear-gradient(135deg, var(--role-primary), var(--role-secondary));
+    }
+
+    .sidebar-bottom {
+        display: grid;
+        gap: 10px;
+        margin-top: auto;
+        padding-top: 18px;
+    }
+
+    .sidebar-bottom .sidebar-link {
+        min-height: 44px;
+        justify-content: center;
+        background: #ffffff;
+        border-color: var(--dash-border);
+        box-shadow: 0 10px 26px rgba(15, 23, 42, 0.04);
+    }
+
+    .sidebar-bottom .sidebar-link i {
+        width: auto;
+        height: auto;
+        color: currentColor;
+        background: transparent;
     }
 
     .sidebar-link.logout {
         color: #dc2626;
     }
 
-    .dashboard-card {
-        border: 1px solid rgba(229, 231, 235, 0.88);
-        border-radius: 18px;
-        background: #ffffff;
-        box-shadow: 0 14px 36px rgba(15, 23, 42, 0.06);
-        transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
-    }
-
-    .dashboard-card:hover {
-        transform: translateY(-2px);
-        border-color: #bfdbfe;
-        box-shadow: 0 20px 46px rgba(15, 23, 42, 0.1);
-    }
-
-    .stat-card {
-        min-height: 9.75rem;
-    }
-
-    .stat-icon,
-    .avatar-placeholder {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-    }
-
-    .stat-icon {
-        width: 3rem;
-        height: 3rem;
-        border-radius: 16px;
-        background: #dbeafe;
-        color: #2563eb;
-        font-size: 1.25rem;
-    }
-
-    .stat-icon.success {
-        background: #d1fae5;
-        color: #047857;
-    }
-
-    .stat-icon.warning {
-        background: #fef3c7;
-        color: #b45309;
-    }
-
-    .avatar-placeholder {
-        width: 4.25rem;
-        height: 4.25rem;
-        border-radius: 18px;
-        background: linear-gradient(135deg, #dbeafe, #d1fae5);
-        color: #2563eb;
-        font-size: 1.8rem;
+    .sidebar-link.logout strong {
+        color: #dc2626;
     }
 
     .dashboard-eyebrow {
@@ -128,65 +273,20 @@
         text-transform: uppercase;
     }
 
-    .section-title {
-        font-size: 1.05rem;
-        font-weight: 900;
-        margin-bottom: 1rem;
-    }
-
-    .appointment-row {
-        border: 1px solid #e5e7eb;
-        border-radius: 16px;
-        padding: 1rem;
-        background: #ffffff;
-    }
-
-    .appointment-row + .appointment-row {
-        margin-top: 0.75rem;
-    }
-
-    .quick-action {
-        min-height: 5.5rem;
-        border: 1px solid #dbeafe;
-        border-radius: 16px;
-        background: #f8fbff;
-        color: #111827;
-        text-decoration: none;
-        transition: background 160ms ease, border-color 160ms ease, transform 160ms ease;
-    }
-
-    .quick-action:hover,
-    .quick-action:focus {
-        border-color: #93c5fd;
-        color: #2563eb;
-        background: #eff6ff;
-        transform: translateY(-2px);
-    }
-
-    .table {
-        --bs-table-bg: transparent;
-    }
-
-    .table thead th {
-        color: #6b7280;
-        font-size: 0.78rem;
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
-    }
-
     @media (max-width: 991.98px) {
         .dashboard-sidebar {
-            width: auto;
-            min-height: auto;
             position: static;
-            margin: 1rem;
-            border: 1px solid rgba(229, 231, 235, 0.9);
-            border-radius: 20px;
+            width: auto;
+            height: auto;
+            min-height: auto;
+            margin: 16px;
+            border: 1px solid rgba(203, 213, 225, 0.74);
+            border-radius: 24px;
         }
 
         .dashboard-main {
             margin-left: 0;
-            padding: 0 1rem 1.5rem;
+            padding: 0 16px 34px;
         }
 
         .sidebar-nav {

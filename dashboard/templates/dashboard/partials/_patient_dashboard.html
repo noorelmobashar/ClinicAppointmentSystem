@@ -6,8 +6,8 @@
             <p>Track upcoming appointments, follow care milestones, and keep medical activity organized from one calm workspace.</p>
         </div>
         <div class="hero-actions">
-            <a href="#" class="dash-btn primary"><i class="bi bi-calendar-plus"></i>Book Appointment</a>
-            <a href="#" class="dash-btn secondary"><i class="bi bi-file-medical"></i>View Records</a>
+            <a href="{% url 'patient-booking' %}" class="dash-btn primary"><i class="bi bi-calendar-plus"></i>Book Appointment</a>
+            <a href="{% url 'my-appointments' %}" class="dash-btn secondary"><i class="bi bi-file-medical"></i>View Records</a>
         </div>
     </section>
 
@@ -139,9 +139,9 @@
                 <h2 class="side-title">Quick actions</h2>
                 <p class="side-copy">Move directly into the patient tasks used most often.</p>
                 <div class="action-list">
-                    <a href="#" class="action-link featured"><span><i class="bi bi-calendar-plus me-2"></i>Book new appointment</span><i class="bi bi-plus"></i></a>
-                    <a href="#" class="action-link"><span><i class="bi bi-search me-2"></i>Find a doctor</span><i class="bi bi-arrow-right"></i></a>
-                    <a href="#" class="action-link"><span><i class="bi bi-credit-card me-2"></i>Review payments</span><i class="bi bi-arrow-right"></i></a>
+                    <a href="{% url 'patient-booking' %}" class="action-link featured"><span><i class="bi bi-calendar-plus me-2"></i>Book new appointment</span><i class="bi bi-plus"></i></a>
+                    <a href="{% url 'my-appointments' %}" class="action-link"><span><i class="bi bi-search me-2"></i>Find a doctor</span><i class="bi bi-arrow-right"></i></a>
+                    <a href="{% url 'my-appointments' %}" class="action-link"><span><i class="bi bi-credit-card me-2"></i>Review payments</span><i class="bi bi-arrow-right"></i></a>
                 </div>
             </article>
         </aside>

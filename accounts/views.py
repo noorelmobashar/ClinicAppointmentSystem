@@ -19,11 +19,17 @@ class CustomLoginView(View):
             email = form.cleaned_data['email']
             password = form.cleaned_data['password']
 
-            try:
-                user = CustomUser.objects.get(email=email)
-            except CustomUser.DoesNotExist:
+            users_qs = CustomUser.objects.filter(email=email)
+
+            if not users_qs.exists():
                 form.add_error(None, "Invalid email or password")
                 return render(request, 'accounts/login.html', {'form': form})
+
+            if users_qs.count() > 1:
+                form.add_error(None, "Multiple accounts found for this email. Please contact support.")
+                return render(request, 'accounts/login.html', {'form': form})
+
+            user = users_qs.first()
 
             if not check_password(password, user.password):
                 form.add_error(None, "Invalid email or password")
