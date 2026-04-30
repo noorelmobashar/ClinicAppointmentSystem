@@ -1,0 +1,508 @@
+{% extends "base.html" %}
+
+{% block title %}Patient Dashboard | Clinic System{% endblock %}
+
+{% block extra_css %}
+<style>
+    .patient-shell {
+        padding: 2rem 0 4rem;
+    }
+
+    .patient-hero {
+        position: relative;
+        overflow: hidden;
+        padding: clamp(2rem, 4vw, 3.5rem);
+        border-radius: 30px;
+        color: #fff;
+        background:
+            radial-gradient(circle at top left, rgba(255, 255, 255, 0.24), transparent 18rem),
+            linear-gradient(135deg, #0f766e, #2563eb 52%, #0891b2);
+        box-shadow: 0 30px 70px rgba(14, 116, 144, 0.28);
+    }
+
+    .patient-hero::after {
+        content: "";
+        position: absolute;
+        right: -5rem;
+        bottom: -6rem;
+        width: 18rem;
+        height: 18rem;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.12);
+    }
+
+    .patient-hero > * {
+        position: relative;
+        z-index: 1;
+    }
+
+    .hero-chip,
+    .section-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        min-height: 2rem;
+        padding: 0 0.85rem;
+        border-radius: 999px;
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+    }
+
+    .hero-chip {
+        color: rgba(255, 255, 255, 0.92);
+        background: rgba(255, 255, 255, 0.14);
+    }
+
+    .patient-hero h1 {
+        margin: 1rem 0 0;
+        font-size: clamp(2rem, 5vw, 3.4rem);
+        font-weight: 800;
+        line-height: 1.05;
+    }
+
+    .patient-hero p {
+        max-width: 42rem;
+        margin: 1rem 0 0;
+        color: rgba(255, 255, 255, 0.82);
+        font-size: 1rem;
+        font-weight: 600;
+        line-height: 1.7;
+    }
+
+    .hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.9rem;
+        margin-top: 1.75rem;
+    }
+
+    .hero-note {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+
+    .hero-note-card {
+        padding: 1rem 1.1rem;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(10px);
+    }
+
+    .hero-note-label {
+        color: rgba(255, 255, 255, 0.72);
+        font-size: 0.75rem;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+    }
+
+    .hero-note-value {
+        margin-top: 0.55rem;
+        font-size: 1.2rem;
+        font-weight: 800;
+    }
+
+    .patient-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.55fr) minmax(18rem, 0.95fr);
+        gap: 1.5rem;
+        margin-top: 1.75rem;
+    }
+
+    .patient-stack {
+        display: grid;
+        gap: 1.5rem;
+    }
+
+    .section-card {
+        padding: 1.6rem;
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        border-radius: 26px;
+        background: rgba(255, 255, 255, 0.92);
+        box-shadow: 0 20px 45px rgba(15, 23, 42, 0.08);
+    }
+
+    .section-card.soft {
+        background: linear-gradient(180deg, rgba(239, 246, 255, 0.96), rgba(255, 255, 255, 0.96));
+    }
+
+    .section-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .section-chip {
+        color: var(--clinic-primary-strong);
+        background: #dbeafe;
+    }
+
+    .section-title {
+        margin: 0.8rem 0 0;
+        font-size: 1.2rem;
+        font-weight: 800;
+    }
+
+    .section-copy {
+        margin: 0.55rem 0 0;
+        color: var(--clinic-muted);
+        line-height: 1.7;
+    }
+
+    .quick-grid,
+    .support-grid,
+    .resource-grid {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .quick-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .quick-card,
+    .support-card,
+    .resource-card,
+    .timeline-item {
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        border-radius: 22px;
+        background: #fff;
+    }
+
+    .quick-card {
+        padding: 1.25rem;
+        text-decoration: none;
+        color: inherit;
+        transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+    }
+
+    .quick-card:hover,
+    .quick-card:focus {
+        transform: translateY(-3px);
+        border-color: rgba(37, 99, 235, 0.3);
+        box-shadow: 0 18px 38px rgba(37, 99, 235, 0.13);
+    }
+
+    .quick-icon,
+    .support-icon {
+        width: 3rem;
+        height: 3rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 18px;
+        color: var(--clinic-primary-strong);
+        background: linear-gradient(135deg, #dbeafe, #e0f2fe);
+        font-size: 1.2rem;
+    }
+
+    .quick-card h3,
+    .support-card h3,
+    .resource-card h3 {
+        margin: 1rem 0 0.35rem;
+        font-size: 1.05rem;
+        font-weight: 800;
+    }
+
+    .quick-card p,
+    .support-card p,
+    .resource-card p {
+        margin: 0;
+        color: var(--clinic-muted);
+        line-height: 1.65;
+    }
+
+    .timeline-list {
+        display: grid;
+        gap: 0.9rem;
+    }
+
+    .timeline-item {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        gap: 1rem;
+        align-items: center;
+        padding: 1rem 1.05rem;
+    }
+
+    .timeline-date {
+        min-width: 4.5rem;
+        padding: 0.85rem 0.6rem;
+        border-radius: 18px;
+        background: #eff6ff;
+        color: var(--clinic-primary-strong);
+        font-weight: 800;
+        text-align: center;
+        line-height: 1.1;
+    }
+
+    .timeline-date span {
+        display: block;
+        font-size: 0.78rem;
+        color: var(--clinic-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+    }
+
+    .timeline-title {
+        font-weight: 800;
+    }
+
+    .timeline-meta {
+        color: var(--clinic-muted);
+        font-size: 0.93rem;
+    }
+
+    .timeline-badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 2rem;
+        padding: 0 0.85rem;
+        border-radius: 999px;
+        background: #dcfce7;
+        color: #166534;
+        font-size: 0.74rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .support-card,
+    .resource-card {
+        padding: 1.2rem;
+    }
+
+    .support-header {
+        display: flex;
+        align-items: center;
+        gap: 0.9rem;
+    }
+
+    .check-list {
+        display: grid;
+        gap: 0.75rem;
+        margin: 1rem 0 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .check-list li {
+        display: flex;
+        gap: 0.7rem;
+        color: var(--clinic-muted);
+        line-height: 1.55;
+    }
+
+    .check-list i {
+        color: #0891b2;
+    }
+
+    .resource-grid {
+        margin-top: 1rem;
+    }
+
+    .resource-card {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+
+    .resource-link {
+        color: var(--clinic-primary);
+        font-weight: 800;
+        text-decoration: none;
+    }
+
+    @media (max-width: 991.98px) {
+        .patient-grid,
+        .hero-note {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 767.98px) {
+        .quick-grid,
+        .timeline-item {
+            grid-template-columns: 1fr;
+        }
+
+        .timeline-item {
+            justify-items: start;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="patient-shell">
+    <div class="container">
+        <section class="patient-hero">
+            <span class="hero-chip"><i class="bi bi-heart-pulse"></i> Patient Space</span>
+            <h1>Care planning that feels clear, calm, and easy to manage.</h1>
+            <p>
+                Review your care activity, move quickly to booking, and keep your appointments,
+                preparation notes, and clinic follow-up in one place.
+            </p>
+
+            <div class="hero-actions">
+                <a class="btn btn-light" href="/appointments/my/">
+                    <i class="bi bi-calendar2-check me-1"></i>My appointments
+                </a>
+                <a class="btn btn-outline-light" href="#">
+                    <i class="bi bi-plus-circle me-1"></i>Book a new visit
+                </a>
+            </div>
+
+            <div class="hero-note">
+                <div class="hero-note-card">
+                    <div class="hero-note-label">Profile</div>
+                    <div class="hero-note-value">{{ request.user.get_full_name|default:request.user.username }}</div>
+                </div>
+                <div class="hero-note-card">
+                    <div class="hero-note-label">Role</div>
+                    <div class="hero-note-value">Patient account</div>
+                </div>
+                <div class="hero-note-card">
+                    <div class="hero-note-label">Focus today</div>
+                    <div class="hero-note-value">Booking and follow-up</div>
+                </div>
+            </div>
+        </section>
+
+        <div class="patient-grid">
+            <div class="patient-stack">
+                <section class="section-card soft">
+                    <div class="section-head">
+                        <div>
+                            <span class="section-chip">Quick Actions</span>
+                            <h2 class="section-title">Start the next step without hunting through menus.</h2>
+                            <p class="section-copy">Designed for the most common patient tasks: scheduling, reviewing visits, and preparing for care.</p>
+                        </div>
+                    </div>
+
+                    <div class="quick-grid">
+                        <a class="quick-card" href="#">
+                            <span class="quick-icon"><i class="bi bi-calendar-plus"></i></span>
+                            <h3>Book Appointment</h3>
+                            <p>Choose a doctor, date, and time slot with a booking-focused layout.</p>
+                        </a>
+                        <a class="quick-card" href="/appointments/my/">
+                            <span class="quick-icon"><i class="bi bi-journal-medical"></i></span>
+                            <h3>Visit History</h3>
+                            <p>Review upcoming visits and look back at previous appointments in one page.</p>
+                        </a>
+                        <a class="quick-card" href="#">
+                            <span class="quick-icon"><i class="bi bi-file-earmark-text"></i></span>
+                            <h3>Preparation Notes</h3>
+                            <p>Keep reminders for symptoms, medication, and questions before the visit.</p>
+                        </a>
+                        <a class="quick-card" href="#">
+                            <span class="quick-icon"><i class="bi bi-credit-card-2-front"></i></span>
+                            <h3>Payment Follow-up</h3>
+                            <p>Track appointments that are still waiting for payment confirmation.</p>
+                        </a>
+                    </div>
+                </section>
+
+                <section class="section-card">
+                    <div class="section-head">
+                        <div>
+                            <span class="section-chip">Care Timeline</span>
+                            <h2 class="section-title">A simple view of what usually happens next.</h2>
+                        </div>
+                    </div>
+
+                    <div class="timeline-list">
+                        <article class="timeline-item">
+                            <div class="timeline-date">01<span>Step</span></div>
+                            <div>
+                                <div class="timeline-title">Pick the right doctor and time</div>
+                                <div class="timeline-meta">Use the booking page to match availability with your schedule.</div>
+                            </div>
+                            <span class="timeline-badge">Schedule</span>
+                        </article>
+                        <article class="timeline-item">
+                            <div class="timeline-date">02<span>Step</span></div>
+                            <div>
+                                <div class="timeline-title">Prepare notes before your visit</div>
+                                <div class="timeline-meta">Bring symptoms, medications, and any previous results that matter.</div>
+                            </div>
+                            <span class="timeline-badge">Prepare</span>
+                        </article>
+                        <article class="timeline-item">
+                            <div class="timeline-date">03<span>Step</span></div>
+                            <div>
+                                <div class="timeline-title">Review follow-up after the appointment</div>
+                                <div class="timeline-meta">Check recommendations, next visits, and any pending payment state.</div>
+                            </div>
+                            <span class="timeline-badge">Follow Up</span>
+                        </article>
+                    </div>
+                </section>
+            </div>
+
+            <div class="patient-stack">
+                <section class="section-card">
+                    <div class="section-head">
+                        <div>
+                            <span class="section-chip">Visit Checklist</span>
+                            <h2 class="section-title">Come prepared.</h2>
+                        </div>
+                    </div>
+
+                    <div class="support-grid">
+                        <article class="support-card">
+                            <div class="support-header">
+                                <span class="support-icon"><i class="bi bi-clipboard2-pulse"></i></span>
+                                <div>
+                                    <h3>Before You Arrive</h3>
+                                    <p>Small preparation steps reduce delays and help the doctor use the visit well.</p>
+                                </div>
+                            </div>
+                            <ul class="check-list">
+                                <li><i class="bi bi-check2-circle"></i><span>Confirm your appointment time and doctor.</span></li>
+                                <li><i class="bi bi-check2-circle"></i><span>List recent symptoms, concerns, or medication changes.</span></li>
+                                <li><i class="bi bi-check2-circle"></i><span>Bring any relevant reports or test results.</span></li>
+                            </ul>
+                        </article>
+                    </div>
+                </section>
+
+                <section class="section-card">
+                    <div class="section-head">
+                        <div>
+                            <span class="section-chip">Resources</span>
+                            <h2 class="section-title">Useful starting points.</h2>
+                        </div>
+                    </div>
+
+                    <div class="resource-grid">
+                        <article class="resource-card">
+                            <div>
+                                <h3>Appointment overview</h3>
+                                <p>Check all scheduled and previous visits from one history page.</p>
+                            </div>
+                            <a class="resource-link" href="/appointments/my/">Open</a>
+                        </article>
+                        <article class="resource-card">
+                            <div>
+                                <h3>New booking flow</h3>
+                                <p>Use the booking layout to find open times and confirm quickly.</p>
+                            </div>
+                            <a class="resource-link" href="#">Open</a>
+                        </article>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
