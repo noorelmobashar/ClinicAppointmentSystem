@@ -1,0 +1,84 @@
+<section class="profile-card" style="--delay: 80ms;">
+    <div class="profile-section-title">
+        <span class="profile-section-icon"><i class="bi bi-heart-pulse"></i></span>
+        <div>
+            <div class="dashboard-eyebrow">Patient</div>
+            <h3 class="h5 fw-bold">Medical Information</h3>
+        </div>
+    </div>
+    {% if patient_profile_missing %}
+        <div class="alert alert-warning rounded-4">
+            Medical profile details are not available yet. Please contact an administrator.
+        </div>
+    {% else %}
+        {% if patient_profile_updated %}
+            <div class="alert alert-success rounded-4">
+                Medical information updated successfully.
+            </div>
+        {% endif %}
+
+        {% if patient_profile_form and patient_profile_form.non_field_errors %}
+            <div class="alert alert-danger rounded-4">
+                {% for error in patient_profile_form.non_field_errors %}
+                    <div>{{ error }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% if edit_mode %}
+            <form method="post" class="profile-form" novalidate>
+                {% csrf_token %}
+                <input type="hidden" name="form_type" value="patient">
+                <div class="profile-info-grid">
+                    <div>
+                        <label for="date_of_birth" class="profile-label">Date of birth</label>
+                        <input
+                            type="date"
+                            name="date_of_birth"
+                            id="date_of_birth"
+                            class="form-control{% if patient_profile_form and patient_profile_form.errors.date_of_birth %} is-invalid{% endif %}"
+                            value="{{ patient_profile_form.date_of_birth.value|default_if_none:'' }}"
+                            required
+                        >
+                        {% if patient_profile_form and patient_profile_form.errors.date_of_birth %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in patient_profile_form.errors.date_of_birth %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label for="blood_type" class="profile-label">Blood type</label>
+                        <input
+                            type="text"
+                            name="blood_type"
+                            id="blood_type"
+                            class="form-control{% if patient_profile_form and patient_profile_form.errors.blood_type %} is-invalid{% endif %}"
+                            value="{{ patient_profile_form.blood_type.value|default_if_none:'' }}"
+                        >
+                        {% if patient_profile_form and patient_profile_form.errors.blood_type %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in patient_profile_form.errors.blood_type %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="profile-form-actions mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check2-circle me-2"></i>Save medical info
+                    </button>
+                </div>
+            </form>
+        {% else %}
+            <div class="profile-info-grid">
+                <div>
+                    <div class="profile-label">Date of birth</div>
+                    <div class="profile-value">{{ patient_profile.date_of_birth|date:"M d, Y"|default:"Not set" }}</div>
+                </div>
+                <div>
+                    <div class="profile-label">Blood type</div>
+                    <div class="profile-value">{{ patient_profile.blood_type|default:"Not set" }}</div>
+                </div>
+            </div>
+        {% endif %}
+    {% endif %}
+</section>

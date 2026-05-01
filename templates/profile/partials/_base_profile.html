@@ -1,0 +1,146 @@
+<section class="profile-card" style="--delay: 0ms;">
+    <div class="profile-hero">
+        <div class="profile-avatar">
+            <i class="bi bi-person"></i>
+        </div>
+        <div class="profile-details">
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                <h2 class="h4 fw-bold mb-0">{{ request.user.get_full_name|default:request.user.username }}</h2>
+                <span class="badge rounded-pill role-pill px-3 py-2">{{ request.user.role|title }}</span>
+            </div>
+            <p class="text-secondary mb-3">{{ request.user.email|default:"No email added" }}</p>
+        </div>
+        <div class="profile-actions">
+            {% if edit_mode %}
+                <a class="btn btn-light border" href="{% url 'profile' %}">
+                    <i class="bi bi-x-lg me-2"></i>Cancel
+                </a>
+            {% else %}
+                <a class="btn btn-outline-primary" href="{% url 'profile' %}?edit=1">
+                    <i class="bi bi-pencil-square me-2"></i>Edit profile
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if base_profile_updated %}
+        <div class="alert alert-success rounded-4 mt-4">
+            Profile updated successfully.
+        </div>
+    {% endif %}
+
+    {% if base_profile_form and base_profile_form.non_field_errors %}
+        <div class="alert alert-danger rounded-4 mt-4">
+            {% for error in base_profile_form.non_field_errors %}
+                <div>{{ error }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {% if edit_mode %}
+        <form method="post" class="profile-form mt-4" novalidate>
+            {% csrf_token %}
+            <input type="hidden" name="form_type" value="base">
+            <div class="profile-info-grid">
+                <div>
+                    <label for="username" class="profile-label">Username</label>
+                    <input
+                        type="text"
+                        name="username"
+                        id="username"
+                        autocomplete="username"
+                        class="form-control{% if base_profile_form and base_profile_form.errors.username %} is-invalid{% endif %}"
+                        value="{{ base_profile_form.username.value|default_if_none:'' }}"
+                        required
+                    >
+                    {% if base_profile_form and base_profile_form.errors.username %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in base_profile_form.errors.username %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                <div>
+                    <label class="profile-label">Email</label>
+                    <div class="profile-value">{{ request.user.email|default:"No email added" }}</div>
+                </div>
+                <div>
+                    <label for="first_name" class="profile-label">First name</label>
+                    <input
+                        type="text"
+                        name="first_name"
+                        id="first_name"
+                        autocomplete="given-name"
+                        class="form-control{% if base_profile_form and base_profile_form.errors.first_name %} is-invalid{% endif %}"
+                        value="{{ base_profile_form.first_name.value|default_if_none:'' }}"
+                    >
+                    {% if base_profile_form and base_profile_form.errors.first_name %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in base_profile_form.errors.first_name %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                <div>
+                    <label for="last_name" class="profile-label">Last name</label>
+                    <input
+                        type="text"
+                        name="last_name"
+                        id="last_name"
+                        autocomplete="family-name"
+                        class="form-control{% if base_profile_form and base_profile_form.errors.last_name %} is-invalid{% endif %}"
+                        value="{{ base_profile_form.last_name.value|default_if_none:'' }}"
+                    >
+                    {% if base_profile_form and base_profile_form.errors.last_name %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in base_profile_form.errors.last_name %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                <div>
+                    <label for="phone_number" class="profile-label">Phone number</label>
+                    <input
+                        type="tel"
+                        name="phone_number"
+                        id="phone_number"
+                        autocomplete="tel"
+                        class="form-control{% if base_profile_form and base_profile_form.errors.phone_number %} is-invalid{% endif %}"
+                        value="{{ base_profile_form.phone_number.value|default_if_none:'' }}"
+                    >
+                    {% if base_profile_form and base_profile_form.errors.phone_number %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in base_profile_form.errors.phone_number %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="profile-form-actions mt-4">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check2-circle me-2"></i>Save profile
+                </button>
+                <a class="btn btn-light border" href="{% url 'profile' %}">Cancel</a>
+            </div>
+        </form>
+    {% else %}
+        <div class="profile-info-grid mt-4">
+            <div>
+                <div class="profile-label">Username</div>
+                <div class="profile-value">{{ request.user.username }}</div>
+            </div>
+            <div>
+                <div class="profile-label">Email</div>
+                <div class="profile-value">{{ request.user.email|default:"No email added" }}</div>
+            </div>
+            <div>
+                <div class="profile-label">First name</div>
+                <div class="profile-value">{{ request.user.first_name|default:"Not set" }}</div>
+            </div>
+            <div>
+                <div class="profile-label">Last name</div>
+                <div class="profile-value">{{ request.user.last_name|default:"Not set" }}</div>
+            </div>
+            <div>
+                <div class="profile-label">Phone number</div>
+                <div class="profile-value">{{ request.user.phone_number|default:"No phone number added" }}</div>
+            </div>
+        </div>
+    {% endif %}
+</section>

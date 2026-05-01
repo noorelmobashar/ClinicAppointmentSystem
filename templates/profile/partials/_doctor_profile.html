@@ -1,0 +1,83 @@
+<section class="profile-card" style="--delay: 80ms;">
+    <div class="profile-section-title">
+        <span class="profile-section-icon"><i class="bi bi-clipboard2-pulse"></i></span>
+        <div>
+            <div class="dashboard-eyebrow">Doctor</div>
+            <h3 class="h5 fw-bold">Professional Information</h3>
+        </div>
+    </div>
+    {% if doctor_profile_missing %}
+        <div class="alert alert-warning rounded-4">
+            Professional profile details are not available yet. Please contact an administrator.
+        </div>
+    {% else %}
+        {% if doctor_profile_updated %}
+            <div class="alert alert-success rounded-4">
+                Professional information updated successfully.
+            </div>
+        {% endif %}
+
+        {% if doctor_profile_form and doctor_profile_form.non_field_errors %}
+            <div class="alert alert-danger rounded-4">
+                {% for error in doctor_profile_form.non_field_errors %}
+                    <div>{{ error }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% if edit_mode %}
+            <form method="post" class="profile-form" novalidate>
+                {% csrf_token %}
+                <input type="hidden" name="form_type" value="doctor">
+                <div class="profile-info-grid">
+                    <div>
+                        <label for="specialty" class="profile-label">Specialty</label>
+                        <input
+                            type="text"
+                            name="specialty"
+                            id="specialty"
+                            class="form-control{% if doctor_profile_form and doctor_profile_form.errors.specialty %} is-invalid{% endif %}"
+                            value="{{ doctor_profile_form.specialty.value|default_if_none:'' }}"
+                            required
+                        >
+                        {% if doctor_profile_form and doctor_profile_form.errors.specialty %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in doctor_profile_form.errors.specialty %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="profile-bio">
+                        <label for="bio" class="profile-label">Bio</label>
+                        <textarea
+                            name="bio"
+                            id="bio"
+                            rows="4"
+                            class="form-control{% if doctor_profile_form and doctor_profile_form.errors.bio %} is-invalid{% endif %}"
+                        >{{ doctor_profile_form.bio.value|default_if_none:'' }}</textarea>
+                        {% if doctor_profile_form and doctor_profile_form.errors.bio %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in doctor_profile_form.errors.bio %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="profile-form-actions mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check2-circle me-2"></i>Save professional info
+                    </button>
+                </div>
+            </form>
+        {% else %}
+            <div class="profile-info-grid">
+                <div>
+                    <div class="profile-label">Specialty</div>
+                    <div class="profile-value">{{ doctor_profile.specialty|default:"Not set" }}</div>
+                </div>
+                <div class="profile-bio">
+                    <div class="profile-label">Bio</div>
+                    <p class="profile-value mb-0">{{ doctor_profile.bio|default:"No bio added yet." }}</p>
+                </div>
+            </div>
+        {% endif %}
+    {% endif %}
+</section>

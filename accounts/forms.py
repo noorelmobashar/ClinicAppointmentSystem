@@ -1,5 +1,5 @@
 from django import forms
-from accounts.models import CustomUser
+from accounts.models import CustomUser, DoctorProfile, PatientProfile
 
 class LoginForm(forms.Form):
     email = forms.EmailField()
@@ -43,3 +43,28 @@ class ResetPasswordForm(forms.Form):
             self.add_error("confirm_password", "Passwords do not match")
 
         return cleaned_data
+
+
+class ChangePasswordForm(ResetPasswordForm):
+    old_password = forms.CharField()
+
+
+class BaseProfileForm(forms.ModelForm):
+    class Meta:
+        model = CustomUser
+        fields = ["username", "first_name", "last_name", "phone_number"]
+
+
+class DoctorProfileForm(forms.ModelForm):
+    class Meta:
+        model = DoctorProfile
+        fields = ["specialty", "bio"]
+
+
+class PatientProfileForm(forms.ModelForm):
+    class Meta:
+        model = PatientProfile
+        fields = ["date_of_birth", "blood_type"]
+        widgets = {
+            "date_of_birth": forms.DateInput(attrs={"type": "date"}),
+        }

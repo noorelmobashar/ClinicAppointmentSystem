@@ -11,7 +11,12 @@
         <span class="sidebar-avatar"><i class="bi bi-person-badge"></i></span>
         <div>
             <div class="sidebar-name">{{ request.user.get_full_name|default:request.user.username }}</div>
-            <div class="sidebar-role">{{ request.user.role|title }}{% if request.user.email %} - {{ request.user.email }}{% endif %}</div>
+            <div class="sidebar-meta">
+                <span class="sidebar-role-pill">{{ request.user.role|title }}</span>
+                {% if request.user.email %}
+                    <span class="sidebar-email">{{ request.user.email }}</span>
+                {% endif %}
+            </div>
         </div>
     </div>
 
@@ -84,7 +89,7 @@
     </nav>
 
     <div class="sidebar-bottom">
-        <a class="sidebar-link" href="#">
+        <a class="sidebar-link {% if current_section == 'profile' %}active{% endif %}" href="{% url 'profile' %}">
             <i class="bi bi-person"></i>
             <strong>Profile</strong>
         </a>
