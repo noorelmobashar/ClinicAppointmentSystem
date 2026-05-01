@@ -8,11 +8,12 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.hashers import check_password
 from .forms import LoginForm, RegisterForm, ForgotPasswordForm, ResetPasswordForm
 from .models import CustomUser
-from django.core.mail import send_mail
 from django.db import transaction
-from .utils.return_testmail_recepient import map_to_testmail
+# from .utils.return_testmail_recepient import map_to_testmail
 from .utils.verification_service import VerificationService
 from django.utils import timezone
+from django.template.loader import render_to_string
+from django.core.mail import EmailMultiAlternatives
 class CustomLoginView(View):
 
     def get(self, request):
@@ -60,13 +61,23 @@ class CustomRegisterView(View):
                 verification_link = VerificationService.generate_link(user)
 
                 # Using utility function to map email to testmail recepient
-                recepient_email = map_to_testmail(user.email)
-                send_mail(
-                    subject="Activate Your Account",
-                    message=f"Please activate your account using the following link: {verification_link}",
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[recepient_email],
+                # recepient_email = map_to_testmail(user.email)
+                html_content = render_to_string(
+                    "emails/activate_account.html",
+                    {
+                        "user": user,
+                        "verification_link": verification_link
+                    }
                 )
+                email = EmailMultiAlternatives(
+                    subject="Activate Your Account",
+                    body="Please activate your account.",
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    to=[user.email],
+                )
+
+                email.attach_alternative(html_content, "text/html")
+                email.send()
             messages.success(
                 request,
                 "Account created successfully. Please check your email to activate your account."
@@ -88,13 +99,23 @@ class CustomForgotPasswordView(View):
 
                 reset_link = VerificationService.generate_link(user,forget_password=True)  
 
-                recepient_email = map_to_testmail(user.email)
-                send_mail(
-                    subject="Reset Your Password",
-                    message=f"Please reset your password using the following link: {reset_link}",
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[recepient_email],
+                # recepient_email = map_to_testmail(user.email)
+                html_content = render_to_string(
+                    "emails/reset_password.html",
+                    {
+                        "user": user,
+                        "reset_link": reset_link
+                    }
                 )
+                email = EmailMultiAlternatives(
+                    subject="Reset Your Password",
+                    body="Reset your password using the link.",
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    to=[user.email],
+                )
+
+                email.attach_alternative(html_content, "text/html")
+                email.send()
                 messages.success(
                     request,
                     "Password reset link sent. Please check your email."

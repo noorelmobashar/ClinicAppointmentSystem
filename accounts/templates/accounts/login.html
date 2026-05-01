@@ -29,7 +29,7 @@
         </div>
     {% endif %}
 
-    <form method="post" novalidate>
+    <form method="post" novalidate id="login-form">
         {% csrf_token %}
         <div class="mb-3">
             <label for="email" class="form-label fw-bold">Email</label>
@@ -77,9 +77,25 @@
             <a href="{% url 'register' %}" class="soft-link small">Register</a>
         </div>
 
-        <button type="submit" class="btn btn-primary w-100 mt-2">
-            <i class="bi bi-box-arrow-in-right me-2"></i>Login
+        <button type="submit" class="btn btn-primary w-100 mt-2" id="login-submit">
+            <i class="bi bi-box-arrow-in-right me-2"></i><span>Login</span>
         </button>
     </form>
 </div>
+
+<script>
+    const loginForm = document.getElementById("login-form");
+    const loginSubmit = document.getElementById("login-submit");
+
+    if (loginForm && loginSubmit) {
+        loginForm.addEventListener("submit", () => {
+            loginSubmit.disabled = true;
+            loginSubmit.setAttribute("aria-busy", "true");
+            const label = loginSubmit.querySelector("span");
+            if (label) {
+                label.textContent = "Signing in...";
+            }
+        });
+    }
+</script>
 {% endblock %}
