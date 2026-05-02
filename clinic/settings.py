@@ -30,7 +30,9 @@ DEBUG = True
 ALLOWED_HOSTS = [
     "*"
 ]
-
+CSRF_TRUSTED_ORIGINS = [
+    "https://clinic-appointment-system-dgenbhf6huc3c0e9.spaincentral-01.azurewebsites.net"
+]
 
 # Application definition
 
