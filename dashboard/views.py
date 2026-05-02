@@ -17,14 +17,35 @@ class DashboardView(LoginRequiredMixin, View):
 
         # Patient summary
         if request.user.role == "PATIENT":
-            patient_appointments = Appointment.objects.filter(patient=request.user)
+            today = timezone.now().date()
+            patient_appointments = Appointment.objects.filter(
+                patient=request.user
+            ).select_related("doctor", "doctor__doctor_profile", "slot")
+            upcoming_appointments = patient_appointments.filter(
+                slot__date__gte=today
+            ).order_by("slot__date", "slot__start_time")
+            pending_statuses = [
+                Appointment.Status.REQUESTED,
+                Appointment.Status.AWAITING_PAYMENT,
+            ]
+            next_confirmed_visit = upcoming_appointments.filter(
+                status=Appointment.Status.CONFIRMED
+            ).first()
             context.update({
+                "dashboard_title": "Your care overview",
+                "dashboard_subtitle": "Track upcoming appointments, recent activity, and the next steps for your clinic visits.",
+                "today": today,
                 "total_appointments": patient_appointments.count(),
-                "upcoming_appointments": patient_appointments.filter(slot__date__gte=timezone.now().date()).count(),
+                "upcoming_appointments": upcoming_appointments.count(),
                 "completed_visits": patient_appointments.filter(status=Appointment.Status.COMPLETED).count(),
                 "active_appointments": patient_appointments.exclude(
                     status__in=[Appointment.Status.COMPLETED, Appointment.Status.CANCELLED]
                 ).count(),
+                "pending_approvals": patient_appointments.filter(status__in=pending_statuses).count(),
+                "next_confirmed_visit": next_confirmed_visit,
+                "recent_upcoming_appointments": upcoming_appointments[:3],
+                "last_appointment": patient_appointments.order_by("-slot__date", "-slot__start_time").first(),
+                "patient_profile": getattr(request.user, "patient_profile", None),
             })
 
         

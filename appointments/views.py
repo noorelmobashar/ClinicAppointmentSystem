@@ -19,6 +19,11 @@ def available_slots(request):
         is_booked=False,
     ).order_by("start_time")
 
+    # If querying today's slots, exclude ones that have already passed
+    current = now()
+    if date == current.date().isoformat():
+        slots = slots.filter(start_time__gt=current.time())
+
     data = []
     for slot in slots:
         data.append({
@@ -36,6 +41,7 @@ def patient_booking(request):
 
     return render(request, "patients/booking_wizard.html", {
         "doctors": doctors,
+        "today": now().date().isoformat(),
         "current_section": "book",
         "dashboard_title": "Book a new appointment",
         "dashboard_subtitle": "Choose a doctor, review availability, and confirm the next clinic visit.",
@@ -51,6 +57,12 @@ def book_appointment(request, slot_id):
 
     if slot.is_booked:
         return JsonResponse({"error": "The session is already booked by another user."}, status=400)
+
+    # Reject if the slot date/time has already passed
+    from datetime import datetime, timezone as dt_tz
+    slot_dt = datetime.combine(slot.date, slot.start_time, tzinfo=dt_tz.utc)
+    if slot_dt <= now():
+        return JsonResponse({"error": "This time slot has already passed."}, status=400)
 
     exists = Appointment.objects.filter(
         patient=request.user,

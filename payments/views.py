@@ -1,4 +1,5 @@
 import stripe
+from datetime import timedelta
 from decimal import Decimal
 
 from django.conf import settings
@@ -36,7 +37,7 @@ def CreateCheckoutSessionView(request, appointment_id):
         return redirect("patient-booking")
 
     success_url = request.build_absolute_uri("/payments/success/") + "?session_id={CHECKOUT_SESSION_ID}"
-    cancel_url = request.build_absolute_uri("/payments/cancel/")
+    cancel_url = request.build_absolute_uri(f"/payments/cancel/{appointment.id}/")
 
     doctor_name = str(slot.doctor.get_full_name() or slot.doctor.username)
     slot_date = slot.date.strftime("%Y-%m-%d")
@@ -60,6 +61,7 @@ def CreateCheckoutSessionView(request, appointment_id):
         mode="payment",
         success_url=success_url,
         cancel_url=cancel_url,
+        expires_at=int((now() + timedelta(minutes=30)).timestamp()),
         metadata={
             "appointment_id": str(appointment.id),
         },
@@ -94,7 +96,7 @@ def StripeWebhookView(request):
 
     if event.type == "checkout.session.completed":
         session = event.data.object
-        appointment_id = session.metadata.get("appointment_id")
+        appointment_id = getattr(session.metadata, "appointment_id", None)
 
         if not appointment_id:
             return HttpResponse(status=200)
@@ -105,6 +107,12 @@ def StripeWebhookView(request):
             except Appointment.DoesNotExist:
                 return HttpResponse(status=200)
 
+            # Already confirmed (duplicate webhook or same user paying from multiple tabs)
+            if appointment.status == Appointment.Status.CONFIRMED:
+                if session.payment_intent:
+                    stripe.Refund.create(payment_intent=session.payment_intent)
+                return HttpResponse(status=200)
+
             slot = AppointmentSlot.objects.select_for_update().get(id=appointment.slot_id)
             
             # Retrieve the transaction
@@ -113,8 +121,8 @@ def StripeWebhookView(request):
             except PaymentTransaction.DoesNotExist:
                 txn = None
 
-            if slot.is_booked and appointment.status != Appointment.Status.CONFIRMED:
-                # Slot was taken by someone else who paid first
+            if slot.is_booked:
+                # Slot was taken by another user who paid first
                 if session.payment_intent:
                     stripe.Refund.create(payment_intent=session.payment_intent)
                 
@@ -147,7 +155,7 @@ def StripeWebhookView(request):
 
     elif event.type in ["checkout.session.expired", "checkout.session.async_payment_failed"]:
         session = event.data.object
-        appointment_id = session.metadata.get("appointment_id")
+        appointment_id = getattr(session.metadata, "appointment_id", None)
         
         if appointment_id:
             with transaction.atomic():
@@ -174,7 +182,23 @@ def PaymentSuccessView(request):
 
 
 @login_required
-def PaymentCancelView(request):
+def PaymentCancelView(request, appointment_id=None):
+    if appointment_id:
+        try:
+            appointment = Appointment.objects.get(
+                id=appointment_id,
+                patient=request.user,
+                status=Appointment.Status.AWAITING_PAYMENT,
+            )
+            appointment.status = Appointment.Status.CANCELLED
+            appointment.save(update_fields=["status"])
+            PaymentTransaction.objects.filter(
+                appointment=appointment,
+                status=PaymentTransaction.Status.PENDING,
+            ).update(status=PaymentTransaction.Status.FAILED)
+        except Appointment.DoesNotExist:
+            pass
+
     return render(request, "payments/cancel.html", {
         "dashboard_title": "Payment Cancelled",
         "dashboard_subtitle": "Your appointment was not confirmed.",

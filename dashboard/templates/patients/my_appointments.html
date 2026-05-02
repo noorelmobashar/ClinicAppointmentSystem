@@ -260,6 +260,30 @@
         color: #0891b2;
     }
 
+    .pay-now-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 2rem;
+        padding: 0.35rem 1rem;
+        border-radius: 999px;
+        background: linear-gradient(135deg, #1d4ed8, #0891b2);
+        color: #fff;
+        font-size: 0.78rem;
+        font-weight: 700;
+        text-decoration: none;
+        letter-spacing: 0.04em;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 12px rgba(29, 78, 216, 0.25);
+    }
+
+    .pay-now-btn:hover {
+        background: linear-gradient(135deg, #1e40af, #0e7490);
+        color: #fff;
+        box-shadow: 0 6px 18px rgba(29, 78, 216, 0.35);
+        transform: translateY(-1px);
+    }
+
     @media (max-width: 991.98px) {
         .appointments-grid,
         .stats-row {
@@ -335,7 +359,14 @@
                                             <span><i class="bi bi-receipt"></i>Created {{ appointment.created_at|date:"M d, Y" }}</span>
                                         </div>
                                     </div>
-                                    <span class="status-pill status-{{ appointment.status }}">{{ appointment.get_status_display }}</span>
+                                    <div style="display:flex; flex-direction:column; align-items:flex-end; gap:0.5rem;">
+                                        <span class="status-pill status-{{ appointment.status }}">{{ appointment.get_status_display }}</span>
+                                        {% if appointment.status == "AWAITING_PAYMENT" %}
+                                            <a href="{% url 'stripe-checkout' appointment.id %}" class="pay-now-btn">
+                                                <i class="bi bi-credit-card me-1"></i>Pay Now
+                                            </a>
+                                        {% endif %}
+                                    </div>
                                 </article>
                             {% empty %}
                                 <div class="empty-card">
