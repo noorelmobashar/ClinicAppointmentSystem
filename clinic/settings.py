@@ -60,10 +60,6 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'clinic.urls'
 
-from dotenv import load_dotenv
-
-load_dotenv()
-
 
 def clean_env(name, default=''):
     return os.getenv(name, default).strip().strip("'\"")
@@ -71,6 +67,7 @@ def clean_env(name, default=''):
 
 # Email settings
 EMAIL_HOST = clean_env('EMAIL_HOST')
+
 EMAIL_PORT = int(clean_env('EMAIL_PORT', '587'))
 EMAIL_USE_TLS = clean_env('EMAIL_USE_TLS', 'True') == 'True'
 EMAIL_HOST_USER = clean_env('EMAIL_HOST_USER')
