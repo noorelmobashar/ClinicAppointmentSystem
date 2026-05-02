@@ -2,12 +2,12 @@
     <section class="dashboard-hero">
         <div class="hero-content">
             <div class="hero-kicker"><i class="bi bi-clipboard2-pulse"></i> Doctor Overview</div>
-            <h1>Guide today&apos;s clinical flow from one focused surface.</h1>
+            <h1>Guide your weekly schedule and today's clinical flow from one focused surface.</h1>
             <p>Monitor the queue, prioritize consultations, and keep completed visits moving cleanly into follow-up.</p>
         </div>
         <div class="hero-actions">
-            <a href="#" class="dash-btn primary"><i class="bi bi-calendar-week"></i>Manage Schedule</a>
-            <a href="#" class="dash-btn secondary"><i class="bi bi-journal-medical"></i>Open Notes</a>
+            <a href="{% url 'emr:manage-schedule' %}" class="dash-btn primary"><i class="bi bi-calendar-week"></i>Manage Schedule</a>
+            <a href="{% url 'emr:consultations-list' %}" class="dash-btn secondary"><i class="bi bi-journal-medical"></i>View Consultations</a>
         </div>
     </section>
 
@@ -15,24 +15,24 @@
         <article class="metric-card">
             <span class="metric-icon"><i class="bi bi-calendar2-check"></i></span>
             <div>
-                <div class="metric-label">Total Appointments</div>
-                <div class="metric-value">{{ patients_today|default:"18" }}</div>
-                <div class="metric-note">Patients today</div>
+                <div class="metric-label">This Week</div>
+                <div class="metric-value">{{ total_weekly|default:"0" }}</div>
+                <div class="metric-note">Total appointments</div>
             </div>
         </article>
         <article class="metric-card">
             <span class="metric-icon"><i class="bi bi-hourglass-split"></i></span>
             <div>
-                <div class="metric-label">Upcoming</div>
-                <div class="metric-value">{{ pending_consultations|default:"11" }}</div>
-                <div class="metric-note">Waiting consults</div>
+                <div class="metric-label">Today</div>
+                <div class="metric-value">{{ patients_today|default:"0" }}</div>
+                <div class="metric-note">Scheduled patients</div>
             </div>
         </article>
         <article class="metric-card">
             <span class="metric-icon"><i class="bi bi-check2-circle"></i></span>
             <div>
                 <div class="metric-label">Completed</div>
-                <div class="metric-value">{{ completed_consultations|default:"7" }}</div>
+                <div class="metric-value">{{ completed_consultations|default:"0" }}</div>
                 <div class="metric-note">Finished today</div>
             </div>
         </article>
@@ -40,8 +40,8 @@
             <span class="metric-icon"><i class="bi bi-broadcast"></i></span>
             <div>
                 <div class="metric-label">Active</div>
-                <div class="metric-value">{{ active_consultations|default:"3" }}</div>
-                <div class="metric-note">In consultation</div>
+                <div class="metric-value">{{ active_consultations|default:"0" }}</div>
+                <div class="metric-note">Currently checking in</div>
             </div>
         </article>
     </section>
@@ -51,40 +51,69 @@
             <article class="panel-card">
                 <div class="panel-heading">
                     <div>
-                        <h2 class="panel-title">Today&apos;s queue</h2>
-                        <p class="panel-subtitle">Patients waiting, checked in, and ready for consultation.</p>
+                        <h2 class="panel-title">Weekly Queue</h2>
+                        <p class="panel-subtitle">All appointments for {{ week_start|date:"M d" }} - {{ week_end|date:"M d" }}</p>
                     </div>
                     <span class="section-kicker">Focus</span>
                 </div>
 
                 <div class="appointment-list">
-                    <div class="appointment-item">
-                        <div class="appointment-time">09:30</div>
-                        <span class="appointment-icon"><i class="bi bi-person-check"></i></span>
-                        <div>
-                            <div class="appointment-title">Mona Ali</div>
-                            <div class="appointment-meta">Follow-up - Exam room 2</div>
+                    {% if weekly_appointments %}
+                        {% regroup weekly_appointments by slot.date as appointments_by_date %}
+                        {% for date, appointments in appointments_by_date %}
+                            <div style="padding: 0 0 12px 0; border-bottom: 1px solid rgba(203, 213, 225, 0.5); margin-bottom: 12px;">
+                                <div style="font-size: 0.85rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">
+                                    {{ date|date:"D, M d" }}
+                                </div>
+                                {% for appointment in appointments %}
+                                    <div class="appointment-item">
+                                        <div class="appointment-time">{{ appointment.slot.start_time|time:"H:i" }}</div>
+                                        <span class="appointment-icon">
+                                            {% if appointment.status == 'CHECKED_IN' %}
+                                                <i class="bi bi-person-check"></i>
+                                            {% elif appointment.status == 'CONFIRMED' %}
+                                                <i class="bi bi-person-check-fill"></i>
+                                            {% elif appointment.status == 'REQUESTED' %}
+                                                <i class="bi bi-person-lines-fill"></i>
+                                            {% elif appointment.status == 'COMPLETED' %}
+                                                <i class="bi bi-clipboard2-check"></i>
+                                            {% elif appointment.status == 'CANCELLED' %}
+                                                <i class="bi bi-x-circle"></i>
+                                            {% else %}
+                                                <i class="bi bi-person"></i>
+                                            {% endif %}
+                                        </span>
+                                        <div>
+                                            <div class="appointment-title">{{ appointment.patient.get_full_name|default:appointment.patient.username }}</div>
+                                            <div class="appointment-meta">
+                                                {% if appointment.status == 'COMPLETED' %}
+                                                    Follow-up complete
+                                                {% elif appointment.status == 'CANCELLED' %}
+                                                    Cancelled
+                                                {% else %}
+                                                    Consultation session
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <span class="status-badge 
+                                            {% if appointment.status == 'CHECKED_IN' %}status-active
+                                            {% elif appointment.status == 'CONFIRMED' %}status-confirmed
+                                            {% elif appointment.status == 'REQUESTED' %}status-pending
+                                            {% elif appointment.status == 'COMPLETED' %}status-success
+                                            {% elif appointment.status == 'CANCELLED' %}status-cancelled
+                                            {% else %}status-pending{% endif %}">
+                                            {{ appointment.get_status_display }}
+                                        </span>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div style="padding: 32px 24px; text-align: center; color: #94a3b8;">
+                            <i class="bi bi-calendar-x" style="font-size: 2rem; margin-bottom: 12px; display: block;"></i>
+                            <p style="margin: 0;">No appointments scheduled for this week.</p>
                         </div>
-                        <span class="status-badge status-active">Active</span>
-                    </div>
-                    <div class="appointment-item">
-                        <div class="appointment-time">10:15</div>
-                        <span class="appointment-icon"><i class="bi bi-person-lines-fill"></i></span>
-                        <div>
-                            <div class="appointment-title">Youssef Adel</div>
-                            <div class="appointment-meta">Consultation - Waiting area</div>
-                        </div>
-                        <span class="status-badge status-pending">Pending</span>
-                    </div>
-                    <div class="appointment-item">
-                        <div class="appointment-time">11:00</div>
-                        <span class="appointment-icon"><i class="bi bi-clipboard2-check"></i></span>
-                        <div>
-                            <div class="appointment-title">Nour Samir</div>
-                            <div class="appointment-meta">Review - Confirmed slot</div>
-                        </div>
-                        <span class="status-badge status-confirmed">Confirmed</span>
-                    </div>
+                    {% endif %}
                 </div>
             </article>
 
@@ -97,9 +126,9 @@
                     <span class="section-kicker">Flow</span>
                 </div>
                 <div class="mini-grid">
-                    <div class="mini-tile"><i class="bi bi-door-open me-2"></i>Three exam rooms are currently available</div>
-                    <div class="mini-tile"><i class="bi bi-capsule me-2"></i>Two patients may need medication review</div>
-                    <div class="mini-tile"><i class="bi bi-file-earmark-medical me-2"></i>Seven completed notes ready for closing</div>
+                    <div class="mini-tile"><i class="bi bi-door-open me-2"></i>Check exam room availability</div>
+                    <div class="mini-tile"><i class="bi bi-capsule me-2"></i>Review patient medication history</div>
+                    <div class="mini-tile"><i class="bi bi-file-earmark-medical me-2"></i>{{ completed_consultations|default:"0" }} completed notes ready</div>
                 </div>
             </article>
         </div>
@@ -113,24 +142,24 @@
                 <div class="highlight-list">
                     <div class="highlight-item">
                         <div>
-                            <div class="highlight-label">Current patient</div>
-                            <div class="highlight-value">Mona</div>
+                            <div class="highlight-label">Today's patients</div>
+                            <div class="highlight-value">{{ patients_today|default:"0" }}</div>
                         </div>
-                        <span class="status-badge status-active">Active</span>
+                        <span class="status-badge status-confirmed">Scheduled</span>
                     </div>
                     <div class="highlight-item">
                         <div>
-                            <div class="highlight-label">Waiting patients</div>
-                            <div class="highlight-value">{{ pending_consultations|default:"11" }}</div>
+                            <div class="highlight-label">Pending confirmations</div>
+                            <div class="highlight-value">{{ pending_consultations|default:"0" }}</div>
                         </div>
                         <span class="status-badge status-pending">Pending</span>
                     </div>
                     <div class="highlight-item">
                         <div>
-                            <div class="highlight-label">Completed consults</div>
-                            <div class="highlight-value">{{ completed_consultations|default:"7" }}</div>
+                            <div class="highlight-label">Completed today</div>
+                            <div class="highlight-value">{{ completed_consultations|default:"0" }}</div>
                         </div>
-                        <span class="status-badge status-confirmed">Good</span>
+                        <span class="status-badge status-confirmed">Done</span>
                     </div>
                 </div>
             </article>
@@ -139,9 +168,9 @@
                 <h2 class="side-title">Quick actions</h2>
                 <p class="side-copy">Jump into the clinical tasks that usually need the fastest response.</p>
                 <div class="action-list">
-                    <a href="#" class="action-link featured"><span><i class="bi bi-journal-plus me-2"></i>Start consultation</span><i class="bi bi-plus"></i></a>
-                    <a href="#" class="action-link"><span><i class="bi bi-calendar-week me-2"></i>Adjust schedule</span><i class="bi bi-arrow-right"></i></a>
-                    <a href="#" class="action-link"><span><i class="bi bi-clipboard2-pulse me-2"></i>Review queue</span><i class="bi bi-arrow-right"></i></a>
+                    <a href="{% url 'emr:daily-queue' %}" class="action-link featured"><span><i class="bi bi-people me-2"></i>View Daily Queue</span><i class="bi bi-plus"></i></a>
+                    <a href="{% url 'emr:manage-schedule' %}" class="action-link"><span><i class="bi bi-calendar-week me-2"></i>Adjust schedule</span><i class="bi bi-arrow-right"></i></a>
+                    <a href="{% url 'emr:consultations-list' %}" class="action-link"><span><i class="bi bi-clipboard2-pulse me-2"></i>Review consultations</span><i class="bi bi-arrow-right"></i></a>
                 </div>
             </article>
         </aside>

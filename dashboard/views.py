@@ -1,4 +1,4 @@
-from datetime import date as date_class
+from datetime import date as date_class, timedelta
 
 from django.shortcuts import render, redirect
 from django.views import View
@@ -51,6 +51,58 @@ class DashboardView(LoginRequiredMixin, View):
                 "recent_upcoming_appointments": upcoming_appointments[:3],
                 "last_appointment": patient_appointments.order_by("-slot__date", "-slot__start_time").first(),
                 "patient_profile": getattr(request.user, "patient_profile", None),
+            })
+
+        # Doctor summary
+        if request.user.role == "DOCTOR":
+            today = timezone.now().date()
+            
+            # Calculate week start (Monday) and end (Sunday)
+            week_start = today - timedelta(days=today.weekday())
+            week_end = week_start + timedelta(days=6)
+            
+            # Get all appointments for this doctor in the current week
+            doctor_weekly_appointments = Appointment.objects.filter(
+                slot__doctor=request.user,
+                slot__date__gte=week_start,
+                slot__date__lte=week_end,
+            ).select_related("patient", "slot").order_by("slot__date", "slot__start_time")
+            
+            # Get today's appointments specifically
+            doctor_today_appointments = doctor_weekly_appointments.filter(
+                slot__date=today
+            )
+            
+            # Calculate metrics
+            total_weekly = doctor_weekly_appointments.count()
+            total_today = doctor_today_appointments.count()
+            pending_today = doctor_today_appointments.filter(
+                status=Appointment.Status.REQUESTED
+            ).count()
+            confirmed_today = doctor_today_appointments.filter(
+                status=Appointment.Status.CONFIRMED
+            ).count()
+            checked_in_today = doctor_today_appointments.filter(
+                status=Appointment.Status.CHECKED_IN
+            ).count()
+            completed_today = doctor_today_appointments.filter(
+                status=Appointment.Status.COMPLETED
+            ).count()
+            
+            context.update({
+                "dashboard_title": "Your clinical overview",
+                "dashboard_subtitle": "Monitor your weekly schedule, today's queue, and patient progress through consultations.",
+                "today": today,
+                "week_start": week_start,
+                "week_end": week_end,
+                "weekly_appointments": doctor_weekly_appointments,
+                "today_appointments": doctor_today_appointments,
+                "patients_today": total_today,
+                "pending_consultations": pending_today,
+                "completed_consultations": completed_today,
+                "active_consultations": checked_in_today,
+                "confirmed_consultations": confirmed_today,
+                "total_weekly": total_weekly,
             })
 
         if request.user.role == "RECEPTIONIST":

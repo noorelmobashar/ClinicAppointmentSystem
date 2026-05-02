@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
@@ -20,28 +22,48 @@ class DoctorRequiredMixin(LoginRequiredMixin):
 
 
 class DoctorDailyQueueView(DoctorRequiredMixin, ListView):
-    """Show today's checked-in patients."""
+    """Show weekly appointments for the doctor."""
     template_name = "emr/daily_queue.html"
-    context_object_name = "appointments"
-    paginate_by = 20
+    context_object_name = "weekly_appointments"
+    paginate_by = None
 
     def get_queryset(self):
         today = timezone.now().date()
+        
+        # Calculate week start (Monday) and end (Sunday)
+        week_start = today - timedelta(days=today.weekday())
+        week_end = week_start + timedelta(days=6)
+        
         return Appointment.objects.filter(
             slot__doctor=self.request.user,
-            slot__date=today,
-            status=Appointment.Status.CHECKED_IN,
-        ).select_related("patient", "slot").order_by("slot__start_time")
+            slot__date__gte=week_start,
+            slot__date__lte=week_end,
+        ).select_related("patient", "slot").order_by("slot__date", "slot__start_time")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         today = timezone.now().date()
+        
+        # Calculate week start and end
+        week_start = today - timedelta(days=today.weekday())
+        week_end = week_start + timedelta(days=6)
+        
         context["today"] = today
-        context["completed_today"] = Appointment.objects.filter(
+        context["week_start"] = week_start
+        context["week_end"] = week_end
+        context["total_weekly"] = self.get_queryset().count()
+        context["completed_this_week"] = Appointment.objects.filter(
             slot__doctor=self.request.user,
-            slot__date=today,
+            slot__date__gte=week_start,
+            slot__date__lte=week_end,
             status=Appointment.Status.COMPLETED,
         ).count()
+        context["pending_this_week"] = Appointment.objects.filter(
+            slot__doctor=self.request.user,
+            slot__date__gte=week_start,
+            slot__date__lte=week_end,
+        ).exclude(status__in=[Appointment.Status.COMPLETED, Appointment.Status.CANCELLED]).count()
+        context["current_section"] = "queue"
         return context
 
 
@@ -67,6 +89,7 @@ class ConsultationCreateView(DoctorRequiredMixin, View):
             "appointment": appointment,
             "form": form,
             "formset": formset,
+            "current_section": "consultations",
         })
 
     def post(self, request, *args, **kwargs):
@@ -81,6 +104,7 @@ class ConsultationCreateView(DoctorRequiredMixin, View):
             "appointment": appointment,
             "form": form,
             "formset": formset,
+            "current_section": "consultations",
         })
 
     @transaction.atomic
@@ -113,6 +137,7 @@ class ManageScheduleView(DoctorRequiredMixin, View):
         return render(request, self.template_name, {
             "formset": formset,
             "schedules": self.get_queryset(),
+            "current_section": "schedule",
         })
 
     def post(self, request, *args, **kwargs):
@@ -133,6 +158,7 @@ class ManageScheduleView(DoctorRequiredMixin, View):
         return render(request, self.template_name, {
             "formset": formset,
             "schedules": self.get_queryset(),
+            "current_section": "schedule",
         })
 
 
@@ -146,3 +172,8 @@ class ConsultationListView(DoctorRequiredMixin, ListView):
         return Consultation.objects.filter(
             doctor=self.request.user
         ).select_related("patient", "appointment__slot").order_by("-id")
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["current_section"] = "consultations"
+        return context
