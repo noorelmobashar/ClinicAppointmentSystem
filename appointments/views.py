@@ -61,9 +61,16 @@ def book_appointment(request, slot_id):
     if exists:
         return JsonResponse({"error": "You already booked this time"}, status=400)
 
-    # Do not mark as booked or create appointment until payment succeeds
+    appointment = Appointment.objects.create(
+        patient=request.user,
+        doctor=slot.doctor,
+        slot=slot,
+        status=Appointment.Status.AWAITING_PAYMENT,
+    )
+
+    # Do not mark slot.is_booked = True yet!
     return JsonResponse({
-        "redirect": f"/payments/checkout/{slot.id}/"
+        "redirect": f"/payments/checkout/{appointment.id}/"
     })
 
 

@@ -7,7 +7,7 @@ from .views import (
 )
 
 urlpatterns = [
-    path("checkout/<int:slot_id>/", CreateCheckoutSessionView, name="stripe-checkout"),
+    path("checkout/<int:appointment_id>/", CreateCheckoutSessionView, name="stripe-checkout"),
     path("webhook/", StripeWebhookView, name="stripe-webhook"),
     path("success/", PaymentSuccessView, name="payment-success"),
     path("cancel/", PaymentCancelView, name="payment-cancel"),

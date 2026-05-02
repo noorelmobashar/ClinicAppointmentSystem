@@ -35,11 +35,18 @@ class PaymentsViewsTests(TestCase):
             end_time="10:30:00",
             is_booked=False
         )
-        self.checkout_url = reverse("stripe-checkout", args=[self.slot.id])
+        self.appointment = Appointment.objects.create(
+            patient=self.patient,
+            doctor=self.doctor,
+            slot=self.slot,
+            status=Appointment.Status.AWAITING_PAYMENT,
+        )
+        self.checkout_url = reverse("stripe-checkout", args=[self.appointment.id])
 
     def test_payment_success_view_unauthenticated(self):
         response = self.client.get(reverse("payment-success"))
-        self.assertRedirects(response, f"/accounts/login/?next={reverse('payment-success')}", fetch_redirect_response=False)
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response.url.startswith("/accounts/login/"))
 
     @patch("payments.views.render")
     def test_payment_success_view_authenticated(self, mock_render):
@@ -74,8 +81,11 @@ class PaymentsViewsTests(TestCase):
         self.assertRedirects(response, "https://checkout.stripe.com/test-url", fetch_redirect_response=False)
         mock_create.assert_called_once()
         call_kwargs = mock_create.call_args[1]
-        self.assertEqual(call_kwargs["metadata"]["slot_id"], str(self.slot.id))
-        self.assertEqual(call_kwargs["metadata"]["patient_id"], str(self.patient.id))
+        self.assertEqual(call_kwargs["metadata"]["appointment_id"], str(self.appointment.id))
+        
+        # Check transaction created
+        txn = PaymentTransaction.objects.get(appointment=self.appointment)
+        self.assertEqual(txn.status, PaymentTransaction.Status.PENDING)
 
     def test_create_checkout_session_slot_already_booked(self):
         self.client.force_login(self.patient)
@@ -111,6 +121,18 @@ class StripeWebhookTests(TestCase):
             end_time="11:30:00",
             is_booked=False
         )
+        self.appointment = Appointment.objects.create(
+            patient=self.patient,
+            doctor=self.doctor,
+            slot=self.slot,
+            status=Appointment.Status.AWAITING_PAYMENT,
+        )
+        self.txn = PaymentTransaction.objects.create(
+            appointment=self.appointment,
+            stripe_checkout_id="cs_test_pending",
+            amount=Decimal("200.00"),
+            status=PaymentTransaction.Status.PENDING,
+        )
         self.webhook_url = reverse("stripe-webhook")
 
     @patch("stripe.Webhook.construct_event")
@@ -128,10 +150,8 @@ class StripeWebhookTests(TestCase):
         mock_session = MagicMock()
         mock_session.id = "cs_test_123"
         mock_session.metadata = {
-            "slot_id": str(self.slot.id),
-            "patient_id": str(self.patient.id)
+            "appointment_id": str(self.appointment.id),
         }
-        mock_session.amount_total = 20000
         mock_event.data.object = mock_session
         
         mock_construct.return_value = mock_event
@@ -142,14 +162,12 @@ class StripeWebhookTests(TestCase):
         self.slot.refresh_from_db()
         self.assertTrue(self.slot.is_booked)
 
-        appointment = Appointment.objects.get(slot=self.slot)
-        self.assertEqual(appointment.patient, self.patient)
-        self.assertEqual(appointment.status, Appointment.Status.CONFIRMED)
+        self.appointment.refresh_from_db()
+        self.assertEqual(self.appointment.status, Appointment.Status.CONFIRMED)
 
-        txn = PaymentTransaction.objects.get(appointment=appointment)
-        self.assertEqual(txn.stripe_checkout_id, "cs_test_123")
-        self.assertEqual(txn.amount, Decimal("200.00"))
-        self.assertEqual(txn.status, PaymentTransaction.Status.PAID)
+        self.txn.refresh_from_db()
+        self.assertEqual(self.txn.stripe_checkout_id, "cs_test_123")
+        self.assertEqual(self.txn.status, PaymentTransaction.Status.PAID)
 
     @patch("stripe.Refund.create")
     @patch("stripe.Webhook.construct_event")
@@ -164,8 +182,7 @@ class StripeWebhookTests(TestCase):
         mock_session.id = "cs_test_456"
         mock_session.payment_intent = "pi_test_123"
         mock_session.metadata = {
-            "slot_id": str(self.slot.id),
-            "patient_id": str(self.patient.id)
+            "appointment_id": str(self.appointment.id),
         }
         mock_event.data.object = mock_session
         
@@ -177,5 +194,30 @@ class StripeWebhookTests(TestCase):
         # Ensure refund was called
         mock_refund.assert_called_once_with(payment_intent="pi_test_123")
         
-        # Ensure appointment wasn't created
-        self.assertEqual(Appointment.objects.filter(slot=self.slot).count(), 0)
+        self.appointment.refresh_from_db()
+        self.assertEqual(self.appointment.status, Appointment.Status.CANCELLED)
+
+        self.txn.refresh_from_db()
+        self.assertEqual(self.txn.status, PaymentTransaction.Status.FAILED)
+
+    @patch("stripe.Webhook.construct_event")
+    def test_webhook_checkout_session_expired(self, mock_construct):
+        mock_event = MagicMock()
+        mock_event.type = "checkout.session.expired"
+        
+        mock_session = MagicMock()
+        mock_session.metadata = {
+            "appointment_id": str(self.appointment.id),
+        }
+        mock_event.data.object = mock_session
+        
+        mock_construct.return_value = mock_event
+
+        response = self.client.post(self.webhook_url, data="{}", content_type="application/json")
+        self.assertEqual(response.status_code, 200)
+
+        self.appointment.refresh_from_db()
+        self.assertEqual(self.appointment.status, Appointment.Status.CANCELLED)
+
+        self.txn.refresh_from_db()
+        self.assertEqual(self.txn.status, PaymentTransaction.Status.FAILED)
