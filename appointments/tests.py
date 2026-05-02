@@ -80,6 +80,28 @@ class BookingViewsTests(TestCase):
 
 
 class DoctorScheduleSignalTests(TestCase):
+    def test_saving_schedule_with_date_derives_weekday(self):
+        user_model = get_user_model()
+        doctor = user_model.objects.create_user(
+            username="doctor_schedule_date",
+            email="doctor_schedule_date@example.com",
+            password="pass12345",
+            role="DOCTOR",
+        )
+
+        target_date = timezone.localdate() + timezone.timedelta(days=1)
+
+        schedule = DoctorSchedule.objects.create(
+            doctor=doctor,
+            schedule_date=target_date,
+            start_time=time(9, 0),
+            end_time=time(10, 0),
+            slot_duration_minutes=30,
+        )
+
+        self.assertEqual(schedule.day_of_week, target_date.weekday())
+        self.assertEqual(schedule.get_day_of_week_display(), schedule.DayOfWeek(schedule.day_of_week).label)
+
     def test_saving_schedule_generates_future_slots(self):
         user_model = get_user_model()
         doctor = user_model.objects.create_user(

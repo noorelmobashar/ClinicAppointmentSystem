@@ -17,12 +17,20 @@ class DoctorSchedule(models.Model):
         on_delete=models.CASCADE,
         related_name="doctor_schedules",
     )
-    day_of_week = models.PositiveSmallIntegerField(choices=DayOfWeek.choices)
+    schedule_date = models.DateField(null=True, blank=True)
+    day_of_week = models.PositiveSmallIntegerField(choices=DayOfWeek.choices, null=True, blank=True)
     start_time = models.TimeField()
     end_time = models.TimeField()
     slot_duration_minutes = models.PositiveSmallIntegerField()
 
+    def save(self, *args, **kwargs):
+        if self.schedule_date:
+            self.day_of_week = self.schedule_date.weekday()
+        super().save(*args, **kwargs)
+
     def __str__(self):
+        if self.schedule_date:
+            return f"{self.doctor} - {self.schedule_date} ({self.get_day_of_week_display()})"
         return f"{self.doctor} - {self.get_day_of_week_display()}"
 
 
@@ -129,4 +137,4 @@ class RescheduleHistory(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Reschedule for {self.appointment.id} at {self.created_at}"
+        return f"Reschedule for {self.appointment.id} at {self.created_at}"

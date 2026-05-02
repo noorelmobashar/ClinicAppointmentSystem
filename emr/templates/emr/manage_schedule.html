@@ -104,6 +104,46 @@
                 <p style="margin: 0; color: var(--dash-muted); font-size: 0.95rem;">Set your clinic availability and session times</p>
             </div>
 
+            <div style="margin-bottom: 28px; padding: 22px; border: 1px solid var(--dash-border); border-radius: var(--dash-radius); background: rgba(255, 255, 255, 0.92); box-shadow: var(--dash-shadow-soft);">
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px;">
+                    <div>
+                        <h2 style="font-size: 1.15rem; font-weight: 900; margin: 0 0 6px; color: var(--dash-text);">Current Schedule</h2>
+                        <p style="margin: 0; color: var(--dash-muted); font-size: 0.92rem;">Saved availability shown with weekday names.</p>
+                    </div>
+                </div>
+
+                {% if schedules %}
+                <div style="overflow-x: auto;">
+                    <table class="schedule-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Day Name</th>
+                                <th>Start Time</th>
+                                <th>End Time</th>
+                                <th>Slot Duration (min)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for schedule in schedules %}
+                            <tr>
+                                <td>{% if schedule.schedule_date %}{{ schedule.schedule_date }}{% else %}-{% endif %}</td>
+                                <td><strong>{{ schedule.get_day_of_week_display }}</strong></td>
+                                <td>{{ schedule.start_time }}</td>
+                                <td>{{ schedule.end_time }}</td>
+                                <td>{{ schedule.slot_duration_minutes }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div style="padding: 18px 20px; border-radius: 16px; background: #f8fafc; color: var(--dash-muted); font-weight: 700;">
+                    No schedule entries yet. Add your availability below.
+                </div>
+                {% endif %}
+            </div>
+
             <form method="post" novalidate>
                 {% csrf_token %}
                 
@@ -111,6 +151,7 @@
                     <table class="schedule-table">
                         <thead>
                             <tr>
+                                <th>Date</th>
                                 <th>Day of Week</th>
                                 <th>Start Time</th>
                                 <th>End Time</th>
@@ -122,7 +163,8 @@
                             {{ formset.management_form }}
                             {% for form in formset %}
                             <tr>
-                                <td>{{ form.day_of_week }}</td>
+                                <td>{{ form.schedule_date }}</td>
+                                <td>{% if form.instance.day_of_week is not None %}{{ form.instance.get_day_of_week_display }}{% else %}-{% endif %}</td>
                                 <td>{{ form.start_time }}</td>
                                 <td>{{ form.end_time }}</td>
                                 <td>{{ form.slot_duration_minutes }}</td>

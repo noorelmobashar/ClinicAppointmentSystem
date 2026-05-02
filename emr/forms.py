@@ -24,7 +24,8 @@ PrescriptionFormSet = inlineformset_factory(
 
 DoctorScheduleFormSet = modelformset_factory(
     DoctorSchedule,
-    fields=["day_of_week", "start_time", "end_time", "slot_duration_minutes"],
+    fields=["schedule_date", "start_time", "end_time", "slot_duration_minutes"],
     extra=1,
     can_delete=True,
+    widgets={"schedule_date": forms.DateInput(attrs={"type": "date"})},
 )
