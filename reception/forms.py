@@ -1,7 +1,6 @@
 from django import forms
 from django.contrib.auth import get_user_model
 
-from .models import WalkInPatient
 from appointments.models import Appointment
 
 User = get_user_model()
@@ -40,7 +39,24 @@ class UpdateStatusForm(forms.Form):
     STATUS_CHOICES = [
         (Appointment.Status.CONFIRMED, 'Confirmed'),
         (Appointment.Status.CHECKED_IN, 'Checked In'),
-        (Appointment.Status.COMPLETED, 'Completed'),
         (Appointment.Status.CANCELLED, 'Cancelled'),
+        (Appointment.Status.COMPLETED, 'Completed'),
     ]
     status = forms.ChoiceField(choices=STATUS_CHOICES)
+
+
+
+class RescheduleForm(forms.Form):
+    new_date = forms.DateField(
+        widget=forms.DateInput(attrs={"class": "walkin-input", "type": "date"}),
+    )
+    new_start_time = forms.TimeField(
+        widget=forms.Select(attrs={"class": "walkin-input time-select"}),
+    )
+    reason = forms.CharField(
+        widget=forms.Textarea(attrs={
+            "class": "walkin-input walkin-textarea",
+            "placeholder": "Reason for rescheduling",
+            "rows": 2,
+        }),
+    )
