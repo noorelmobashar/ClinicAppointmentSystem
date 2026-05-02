@@ -10,9 +10,11 @@ class VerificationService:
         token = default_token_generator.make_token(user)
         host = os.getenv('HOST', 'localhost')
         port = os.getenv('PORT', '3000')
+        socket = f"{host}:{port}" if os.getenv("DEBUG", "True") == "True" else host
+        method = "http" if os.getenv("DEBUG", "True") == "True" else "https"
         if forget_password:
-            return f"http://{host}:{port}/accounts/reset-password/{uid}/{token}/"
-        return f"http://{host}:{port}/accounts/verify/{uid}/{token}/"
+            return f"{method}://{socket}/accounts/reset-password/{uid}/{token}/"
+        return f"{method}://{socket}/accounts/verify/{uid}/{token}/"
 
     @staticmethod
     def verify(uid, token):
