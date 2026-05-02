@@ -95,15 +95,26 @@
                                                 {% endif %}
                                             </div>
                                         </div>
-                                        <span class="status-badge 
-                                            {% if appointment.status == 'CHECKED_IN' %}status-active
-                                            {% elif appointment.status == 'CONFIRMED' %}status-confirmed
-                                            {% elif appointment.status == 'REQUESTED' %}status-pending
-                                            {% elif appointment.status == 'COMPLETED' %}status-success
-                                            {% elif appointment.status == 'CANCELLED' %}status-cancelled
-                                            {% else %}status-pending{% endif %}">
-                                            {{ appointment.get_status_display }}
-                                        </span>
+                                        <div style="display: flex; align-items: center; justify-content: flex-end; gap: 10px; flex-wrap: wrap;">
+                                            <span class="status-badge
+                                                {% if appointment.status == 'CHECKED_IN' %}status-active
+                                                {% elif appointment.status == 'CONFIRMED' %}status-confirmed
+                                                {% elif appointment.status == 'REQUESTED' %}status-pending
+                                                {% elif appointment.status == 'COMPLETED' %}status-success
+                                                {% elif appointment.status == 'CANCELLED' %}status-cancelled
+                                                {% else %}status-pending{% endif %}">
+                                                {{ appointment.get_status_display }}
+                                            </span>
+                                            {% if appointment.status == 'CHECKED_IN' or appointment.status == 'COMPLETED' %}
+                                                <a href="{% url 'emr:consultation-create' appointment.id %}" class="dash-btn primary" style="min-height: 36px; padding: 0 12px; font-size: 0.78rem;">
+                                                    <i class="bi bi-stethoscope"></i>Start Consultation
+                                                </a>
+                                            {% else %}
+                                                <button type="button" class="dash-btn primary" style="min-height: 36px; padding: 0 12px; font-size: 0.78rem; color: #94a3b8; background: #e2e8f0; box-shadow: none; cursor: not-allowed;" disabled>
+                                                    <i class="bi bi-stethoscope"></i>Start Consultation
+                                                </button>
+                                            {% endif %}
+                                        </div>
                                     </div>
                                 {% endfor %}
                             </div>

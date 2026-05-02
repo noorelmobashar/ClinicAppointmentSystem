@@ -68,8 +68,12 @@ class DoctorDailyQueueView(DoctorRequiredMixin, ListView):
 
 
 class ConsultationCreateView(DoctorRequiredMixin, View):
-    """Create consultation and prescriptions, mark appointment as COMPLETED."""
+    """Create or update consultation and prescriptions, then mark appointment completed."""
     template_name = "emr/consultation_form.html"
+    allowed_statuses = [
+        Appointment.Status.CHECKED_IN,
+        Appointment.Status.COMPLETED,
+    ]
 
     def get_appointment(self):
         appointment_id = self.kwargs["appointment_id"]
@@ -77,13 +81,17 @@ class ConsultationCreateView(DoctorRequiredMixin, View):
             Appointment,
             pk=appointment_id,
             slot__doctor=self.request.user,
-            status=Appointment.Status.CHECKED_IN,
+            status__in=self.allowed_statuses,
         )
+
+    def get_consultation(self, appointment):
+        return Consultation.objects.filter(appointment=appointment).first()
 
     def get(self, request, *args, **kwargs):
         appointment = self.get_appointment()
-        form = ConsultationForm()
-        formset = PrescriptionFormSet()
+        consultation = self.get_consultation(appointment)
+        form = ConsultationForm(instance=consultation)
+        formset = PrescriptionFormSet(instance=consultation)
 
         return render(request, self.template_name, {
             "appointment": appointment,
@@ -94,8 +102,9 @@ class ConsultationCreateView(DoctorRequiredMixin, View):
 
     def post(self, request, *args, **kwargs):
         appointment = self.get_appointment()
-        form = ConsultationForm(request.POST)
-        formset = PrescriptionFormSet(request.POST)
+        consultation = self.get_consultation(appointment)
+        form = ConsultationForm(request.POST, instance=consultation)
+        formset = PrescriptionFormSet(request.POST, instance=consultation)
 
         if form.is_valid() and formset.is_valid():
             return self.save_consultation(appointment, form, formset)
@@ -119,7 +128,7 @@ class ConsultationCreateView(DoctorRequiredMixin, View):
         formset.save()
 
         appointment.status = Appointment.Status.COMPLETED
-        appointment.save()
+        appointment.save(update_fields=["status"])
 
         messages.success(self.request, f"Consultation saved for {appointment.patient}")
         return redirect("emr:daily-queue")

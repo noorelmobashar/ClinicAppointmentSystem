@@ -3,69 +3,8 @@
 {% block title %}Consultation | Doctor Portal{% endblock %}
 
 {% block extra_css %}
-<style>
-    :root {
-        --dash-bg: #f1f5f9;
-        --dash-surface: #ffffff;
-        --dash-sidebar: #f8fafc;
-        --dash-text: #0f172a;
-        --dash-muted: #64748b;
-        --dash-border: rgba(148, 163, 184, 0.24);
-        --dash-shadow-soft: 0 12px 34px rgba(15, 23, 42, 0.07);
-        --dash-radius: 22px;
-        --role-primary: #059669;
-        --role-secondary: #14b8a6;
-        --role-accent: #d1fae5;
-        --role-wash: rgba(20, 184, 166, 0.18);
-    }
-
-    .clinic-header, .clinic-footer { display: none; }
-    body { background: var(--dash-bg); color: var(--dash-text); }
-    .dashboard-shell {
-        min-height: 100vh;
-        background: radial-gradient(circle at 16% 0%, var(--role-wash), transparent 30rem),
-                    linear-gradient(120deg, rgba(255,255,255,0), rgba(255,255,255,0.62)),
-                    var(--dash-bg);
-    }
-    .dashboard-main {
-        margin-left: 300px; min-height: 100vh; padding: 34px clamp(22px, 4vw, 64px) 56px;
-    }
-    .dashboard-content { width: min(100%, 1380px); margin: 0 auto; }
-    .dashboard-sidebar {
-        position: fixed; inset: 0 auto 0 0; z-index: 30; width: 300px; height: 100vh;
-        display: flex; flex-direction: column; padding: 24px 16px; background: var(--dash-sidebar);
-        border-right: 1px solid rgba(203, 213, 225, 0.74);
-    }
-    .sidebar-brand { display: flex; align-items: center; gap: 12px; padding: 2px 4px 22px; }
-    .sidebar-logo {
-        width: 42px; height: 42px; display: inline-flex; align-items: center; justify-content: center;
-        border-radius: 15px; color: #fff; background: linear-gradient(135deg, var(--role-primary), var(--role-secondary));
-    }
-    .sidebar-kicker { font-size: 0.7rem; font-weight: 700; color: var(--dash-muted); }
-    .sidebar-title { font-size: 1rem; font-weight: 900; color: var(--dash-text); }
-    .sidebar-user { display: flex; align-items: center; gap: 12px; padding: 16px 12px; border: 1px solid var(--dash-border); border-radius: 15px; background: #fff; }
-    .sidebar-avatar { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 12px; background: rgba(241, 245, 249, 0.95); color: var(--role-primary); }
-    .sidebar-name { font-weight: 900; color: var(--dash-text); font-size: 0.9rem; }
-    .sidebar-meta { font-size: 0.75rem; color: var(--dash-muted); }
-    .sidebar-section-title { font-size: 0.75rem; font-weight: 900; color: var(--dash-muted); margin: 24px 0 12px; }
-    .sidebar-nav { display: flex; flex-direction: column; gap: 8px; }
-    .sidebar-link {
-        display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 13px;
-        border: 1px solid transparent; color: #475569; text-decoration: none; transition: all 180ms ease;
-    }
-    .sidebar-link i {
-        width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;
-        flex: 0 0 auto; border-radius: 13px; color: var(--role-primary); background: rgba(241, 245, 249, 0.95);
-    }
-    .sidebar-link strong { display: block; color: #334155; font-size: 0.94rem; font-weight: 900; }
-    .sidebar-link span { display: block; color: #94a3b8; font-size: 0.74rem; font-weight: 700; }
-    .sidebar-link.active, .sidebar-link:hover {
-        color: var(--role-primary); background: rgba(209, 250, 229, 0.55);
-        border-color: rgba(5, 150, 105, 0.28);
-    }
-    .sidebar-link.active i, .sidebar-link:hover i {
-        color: #fff; background: linear-gradient(135deg, var(--role-primary), var(--role-secondary));
-    }
+    {% include "dashboard/partials/_dashboard_styles.html" %}
+    <style>
     .form-card {
         border: 1px solid var(--dash-border); border-radius: var(--dash-radius);
         background: rgba(255, 255, 255, 0.94); box-shadow: var(--dash-shadow-soft); margin-bottom: 22px; overflow: hidden;
@@ -85,6 +24,20 @@
     .form-group textarea:focus, .form-group input:focus {
         outline: none; border-color: var(--role-primary); box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
     }
+    .form-error {
+        margin-top: 6px;
+        color: #dc2626;
+        font-size: 0.82rem;
+        font-weight: 700;
+    }
+    .formset-errors {
+        margin-bottom: 14px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        color: #991b1b;
+        background: #fee2e2;
+        font-weight: 700;
+    }
     .formset-row {
         display: grid; grid-template-columns: 1fr 0.8fr 0.8fr auto; gap: 12px; padding: 12px; margin-bottom: 12px;
         border: 1px solid var(--dash-border); border-radius: 12px; background: #f8fafc; align-items: center;
@@ -103,7 +56,7 @@
     .btn-add:hover { background: #059669; }
     .btn-danger { background: #ef4444; color: #fff; }
     .form-actions { display: flex; gap: 12px; margin-top: 32px; }
-</style>
+    </style>
 {% endblock %}
 
 {% block content %}
@@ -129,10 +82,16 @@
                         <div class="form-group">
                             <label for="{{ form.symptoms_notes.id_for_label }}">Symptoms & Chief Complaint</label>
                             {{ form.symptoms_notes }}
+                            {% for error in form.symptoms_notes.errors %}
+                                <div class="form-error">{{ error }}</div>
+                            {% endfor %}
                         </div>
                         <div class="form-group">
                             <label for="{{ form.diagnosis.id_for_label }}">Diagnosis</label>
                             {{ form.diagnosis }}
+                            {% for error in form.diagnosis.errors %}
+                                <div class="form-error">{{ error }}</div>
+                            {% endfor %}
                         </div>
                     </div>
                 </div>
@@ -146,12 +105,25 @@
                     </div>
                     <div class="form-card-body">
                         {{ formset.management_form }}
+                        {% if formset.non_form_errors %}
+                            <div class="formset-errors">{{ formset.non_form_errors }}</div>
+                        {% endif %}
                         <div id="prescriptions">
                             {% for form in formset %}
                             <div class="formset-row" style="display: grid; grid-template-columns: 1fr 0.8fr 0.8fr auto; gap: 12px;">
-                                <input type="text" name="{{ form.medication_name.html_name }}" placeholder="Medication name" value="{{ form.medication_name.value|default:'' }}" style="padding: 10px 12px; border: 1px solid var(--dash-border); border-radius: 10px;">
-                                <input type="text" name="{{ form.dosage.html_name }}" placeholder="Dosage" value="{{ form.dosage.value|default:'' }}" style="padding: 10px 12px; border: 1px solid var(--dash-border); border-radius: 10px;">
-                                <input type="text" name="{{ form.duration.html_name }}" placeholder="Duration" value="{{ form.duration.value|default:'' }}" style="padding: 10px 12px; border: 1px solid var(--dash-border); border-radius: 10px;">
+                                {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+                                <div>
+                                    <input type="text" name="{{ form.medication_name.html_name }}" id="{{ form.medication_name.id_for_label }}" placeholder="Medication name" value="{{ form.medication_name.value|default:'' }}" style="padding: 10px 12px; border: 1px solid var(--dash-border); border-radius: 10px;">
+                                    {% for error in form.medication_name.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+                                </div>
+                                <div>
+                                    <input type="text" name="{{ form.dosage.html_name }}" id="{{ form.dosage.id_for_label }}" placeholder="Dosage" value="{{ form.dosage.value|default:'' }}" style="padding: 10px 12px; border: 1px solid var(--dash-border); border-radius: 10px;">
+                                    {% for error in form.dosage.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+                                </div>
+                                <div>
+                                    <input type="text" name="{{ form.duration.html_name }}" id="{{ form.duration.id_for_label }}" placeholder="Duration" value="{{ form.duration.value|default:'' }}" style="padding: 10px 12px; border: 1px solid var(--dash-border); border-radius: 10px;">
+                                    {% for error in form.duration.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+                                </div>
                                 <label style="margin: 0;">
                                     {{ form.DELETE }}
                                     <span style="margin-left: 6px; font-size: 0.75rem; color: var(--dash-muted);">Delete</span>
@@ -183,6 +155,11 @@ document.getElementById("add-prescription").addEventListener("click", function(e
         if (name) {
             name = name.replace(/prescriptions-\d+/, `prescriptions-${count}`);
             input.setAttribute("name", name);
+        }
+        let id = input.getAttribute("id");
+        if (id) {
+            id = id.replace(/prescriptions-\d+/, `prescriptions-${count}`);
+            input.setAttribute("id", id);
         }
     });
     

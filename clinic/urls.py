@@ -19,12 +19,12 @@ urlpatterns = [
     path('emr/', include('emr.urls')),
     path('payments/', include('payments.urls')),
     
-    path('__debug__/', include('debug_toolbar.urls')),
+    # path('__debug__/', include('debug_toolbar.urls')),
 ]
 
 
 if settings.DEBUG:
     import debug_toolbar
     urlpatterns = [
-        path('__debug__/', include(debug_toolbar.urls)),
+        path('debug/', include(debug_toolbar.urls)),
     ] + urlpatterns
