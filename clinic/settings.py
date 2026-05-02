@@ -28,7 +28,7 @@ SECRET_KEY = 'django-insecure-!)vtr@w@8tlcc&!%_qtr#pkc*%jw_esk%bi8ip8d7xj0ni%d@k
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    "clinic-appointment-system-dgenbhf6huc3c0e9.spaincentral-01.azurewebsites.net"
+    "*"
 ]
 
 
