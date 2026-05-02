@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Payment Cancelled | Clinic System{% endblock %}
+
+{% block extra_css %}
+<style>
+    .result-shell {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: calc(100vh - 13rem);
+        padding: 2rem 1rem;
+    }
+
+    .result-card {
+        width: 100%;
+        max-width: 32rem;
+        text-align: center;
+        padding: clamp(2.5rem, 5vw, 3.5rem);
+        border: 1px solid rgba(148, 163, 184, 0.22);
+        border-radius: 28px;
+        background: rgba(255, 255, 255, 0.96);
+        box-shadow: 0 22px 56px rgba(15, 23, 42, 0.09);
+    }
+
+    .result-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 5rem;
+        height: 5rem;
+        border-radius: 50%;
+        font-size: 2.4rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .result-icon.cancel {
+        color: #dc2626;
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.12), rgba(220, 38, 38, 0.16));
+        box-shadow: 0 12px 28px rgba(239, 68, 68, 0.15);
+    }
+
+    .result-card h1 {
+        font-size: 1.75rem;
+        font-weight: 800;
+        margin-bottom: 0.6rem;
+    }
+
+    .result-card p {
+        color: var(--clinic-muted);
+        line-height: 1.65;
+        margin-bottom: 1.5rem;
+    }
+
+    .result-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="result-shell">
+    <div class="result-card">
+        <div class="result-icon cancel">
+            <i class="bi bi-x-circle-fill"></i>
+        </div>
+        <h1>Payment Cancelled</h1>
+        <p>
+            The payment was not completed and your appointment remains unconfirmed.
+            You can try booking again or return to the dashboard.
+        </p>
+        <div class="result-actions">
+            <a class="btn btn-primary" href="{% url 'patient-booking' %}">
+                <i class="bi bi-calendar-plus me-1"></i>Try booking again
+            </a>
+            <a class="btn btn-outline-primary" href="{% url 'dashboard' %}">
+                <i class="bi bi-grid-1x2 me-1"></i>Back to dashboard
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
