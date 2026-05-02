@@ -107,6 +107,12 @@ def StripeWebhookView(request):
             except Appointment.DoesNotExist:
                 return HttpResponse(status=200)
 
+            # Already confirmed (duplicate webhook or same user paying from multiple tabs)
+            if appointment.status == Appointment.Status.CONFIRMED:
+                if session.payment_intent:
+                    stripe.Refund.create(payment_intent=session.payment_intent)
+                return HttpResponse(status=200)
+
             slot = AppointmentSlot.objects.select_for_update().get(id=appointment.slot_id)
             
             # Retrieve the transaction
@@ -115,8 +121,8 @@ def StripeWebhookView(request):
             except PaymentTransaction.DoesNotExist:
                 txn = None
 
-            if slot.is_booked and appointment.status != Appointment.Status.CONFIRMED:
-                # Slot was taken by someone else who paid first
+            if slot.is_booked:
+                # Slot was taken by another user who paid first
                 if session.payment_intent:
                     stripe.Refund.create(payment_intent=session.payment_intent)
                 

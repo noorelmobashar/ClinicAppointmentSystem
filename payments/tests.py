@@ -216,3 +216,34 @@ class StripeWebhookTests(TestCase):
 
         self.txn.refresh_from_db()
         self.assertEqual(self.txn.status, PaymentTransaction.Status.FAILED)
+
+    @patch("stripe.Refund.create")
+    @patch("stripe.Webhook.construct_event")
+    def test_webhook_duplicate_payment_same_user_refunds(self, mock_construct, mock_refund):
+        """If the same user pays from multiple tabs, the 2nd+ payments get refunded."""
+        # Simulate that the first payment already went through
+        self.appointment.status = Appointment.Status.CONFIRMED
+        self.appointment.save()
+        self.slot.is_booked = True
+        self.slot.save()
+
+        mock_event = MagicMock()
+        mock_event.type = "checkout.session.completed"
+
+        mock_session = MagicMock()
+        mock_session.id = "cs_test_duplicate"
+        mock_session.payment_intent = "pi_test_duplicate"
+        mock_session.metadata.appointment_id = str(self.appointment.id)
+        mock_event.data.object = mock_session
+
+        mock_construct.return_value = mock_event
+
+        response = self.client.post(self.webhook_url, data="{}", content_type="application/json")
+        self.assertEqual(response.status_code, 200)
+
+        # Ensure the duplicate payment was refunded
+        mock_refund.assert_called_once_with(payment_intent="pi_test_duplicate")
+
+        # Appointment should still be CONFIRMED (not changed)
+        self.appointment.refresh_from_db()
+        self.assertEqual(self.appointment.status, Appointment.Status.CONFIRMED)
