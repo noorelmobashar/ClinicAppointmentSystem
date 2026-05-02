@@ -1,3 +1,5 @@
+from datetime import date as date_class
+
 from django.shortcuts import render, redirect
 from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -51,10 +53,31 @@ class DashboardView(LoginRequiredMixin, View):
                 "patient_profile": getattr(request.user, "patient_profile", None),
             })
 
-        
         if request.user.role == "RECEPTIONIST":
             today = timezone.now().date()
-            appointments_qs = Appointment.objects.filter(slot__date=today).select_related('patient', 'slot', 'slot__doctor').order_by('slot__start_time')
+            appointments_qs = Appointment.objects.select_related('patient', 'slot', 'slot__doctor').order_by('slot__start_time')
+
+            doctor_filter = request.GET.get('doctor')
+            date_filter = request.GET.get('date_filter')
+            search_query = request.GET.get('q')
+
+            if date_filter == 'all':
+                date_filter = ''
+
+            if doctor_filter:
+                appointments_qs = appointments_qs.filter(slot__doctor_id=doctor_filter)
+
+            if date_filter and date_filter != 'all':
+                try:
+                    selected_date = date_class.fromisoformat(date_filter)
+                except ValueError:
+                    selected_date = None
+
+                if selected_date:
+                    appointments_qs = appointments_qs.filter(slot__date=selected_date)
+                else:
+                    date_filter = ''
+
             walkins_qs = WalkInPatient.objects.filter(created_at__date=today)
             walkin_name_by_id = {walkin.id: walkin.name for walkin in walkins_qs}
             appointments = list(appointments_qs)
@@ -73,6 +96,10 @@ class DashboardView(LoginRequiredMixin, View):
                 else:
                     appointment.display_patient_name = patient_name
 
+            if search_query:
+                lower_q = search_query.lower()
+                appointments = [a for a in appointments if lower_q in (a.display_patient_name or "").lower()]
+
             context.update({
                 'appointments': appointments,
                 'walkins': walkins_qs,
@@ -81,12 +108,11 @@ class DashboardView(LoginRequiredMixin, View):
                 'today': today,
                 'total_patients_today': appointments_qs.count(),
                 'pending_patients': appointments_qs.filter(status=Appointment.Status.CONFIRMED).count(),
-                'checked_in_patients': appointments_qs.filter(
-                    status=Appointment.Status.CHECKED_IN
-                ).count(),
-                'active_appointments': appointments_qs.exclude(
-                    status__in=[Appointment.Status.COMPLETED, Appointment.Status.CANCELLED]
-                ).count(),
+                'checked_in_patients': appointments_qs.filter(status=Appointment.Status.CHECKED_IN).count(),
+                'active_appointments': appointments_qs.exclude(status__in=[Appointment.Status.COMPLETED, Appointment.Status.CANCELLED]).count(),
+                'selected_doctor': doctor_filter,
+                'selected_date_filter': date_filter,
+                'search_query': search_query,
             })
 
         return render(request, 'dashboard/dashboard.html', context)
