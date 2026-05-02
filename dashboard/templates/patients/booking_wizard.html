@@ -487,7 +487,8 @@
                 return;
             }
 
-            bookingResult.textContent = "Submitting booking...";
+            confirmButton.disabled = true;
+            bookingResult.textContent = "Redirecting to payment...";
 
             try {
                 const response = await fetch(`/appointments/book/${selectedSlotId}/`, {
@@ -498,14 +499,18 @@
                     }
                 });
 
-                const text = await response.text();
-                bookingResult.textContent = text;
+                const data = await response.json();
 
-                if (response.ok && text.toLowerCase().includes("success")) {
-                    loadSlots();
+                if (response.ok && data.redirect) {
+                    window.location.href = data.redirect;
+                    return;
                 }
+
+                bookingResult.textContent = data.error || "Something went wrong.";
+                confirmButton.disabled = false;
             } catch (error) {
                 bookingResult.textContent = "Booking failed. Please try again.";
+                confirmButton.disabled = false;
             }
         }
 

@@ -12,6 +12,9 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 from pathlib import Path
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -25,12 +28,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-!)vtr@w@8tlcc&!%_qtr#pkc*%jw_esk%bi8ip8d7xj0ni%d@k'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = [
     "*"
 ]
-
+CSRF_TRUSTED_ORIGINS = [
+    "https://clinic-appointment-system-dgenbhf6huc3c0e9.spaincentral-01.azurewebsites.net"
+]
 
 # Application definition
 
@@ -52,6 +57,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -76,6 +82,11 @@ EMAIL_HOST_USER = clean_env('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = clean_env('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = clean_env('DEFAULT_FROM_EMAIL', 'no-reply@clinic.local')
 EMAIL_BACKEND = clean_env('EMAIL_BACKEND')
+
+# Stripe settings
+STRIPE_SECRET_KEY = clean_env('STRIPE_SECRET')
+STRIPE_PUBLIC_KEY = clean_env('STRIPE_PUBLIC')
+STRIPE_WEBHOOK_SECRET = clean_env('STRIPE_WEBHOOK_SECRET')
 
 
 TEMPLATES = [
@@ -103,11 +114,11 @@ WSGI_APPLICATION = 'clinic.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.environ.get('MYSQL_DATABASE', 'clinic_appointment_system'),
-        'USER': os.environ.get('MYSQL_USER', 'root'),
-        'PASSWORD': os.environ.get('MYSQL_PASSWORD', ''),
-        'HOST': os.environ.get('MYSQL_HOST', '127.0.0.1'),
-        'PORT': os.environ.get('MYSQL_PORT', '3306'),
+        'NAME': os.getenv('MYSQL_DATABASE', 'clinic_appointment_system'),
+        'USER': os.getenv('MYSQL_USER', 'root'),
+        'PASSWORD': os.getenv('MYSQL_PASSWORD', ''),
+        'HOST': os.getenv('MYSQL_HOST', '127.0.0.1'),
+        'PORT': os.getenv('MYSQL_PORT', '3306'),
         'OPTIONS': {
             'charset': 'utf8mb4',
             'ssl': {'ca': ''}
@@ -152,6 +163,9 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [BASE_DIR / 'static']
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+WHITENOISE_USE_FINDERS = True
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
