@@ -1,4 +1,9 @@
-Django>=4.2,<5.0
-PyMySQL>=1.1
-cryptography>=3.4
-python-dotenv>=0.19
+asgiref==3.11.1
+cffi==2.0.0
+cryptography==47.0.0
+Django==4.2.30
+pycparser==2.23
+PyMySQL==1.1.2
+python-dotenv==1.2.1
+sqlparse==0.5.5
+typing_extensions==4.15.0
