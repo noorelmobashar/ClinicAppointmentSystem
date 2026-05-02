@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+{% block title %}Profile | Clinic System{% endblock %}
+
+{% block extra_css %}
+    {% include "dashboard/partials/_dashboard_styles.html" %}
+    <style>
+        .profile-content {
+            display: grid;
+            gap: 1.6rem;
+            padding-bottom: 2.5rem;
+            max-width: 1100px;
+        }
+
+        .profile-card {
+            border: 1px solid rgba(148, 163, 184, 0.22);
+            border-radius: 26px;
+            background: rgba(255, 255, 255, 0.96);
+            box-shadow: 0 20px 46px rgba(15, 23, 42, 0.08);
+            padding: clamp(1.4rem, 2.4vw, 2rem);
+            animation: profileRise 420ms ease both;
+            animation-delay: var(--delay, 0ms);
+            transition: transform 180ms ease, box-shadow 180ms ease;
+        }
+
+        .profile-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 26px 54px rgba(15, 23, 42, 0.12);
+        }
+
+        .profile-hero {
+            display: grid;
+            grid-template-columns: minmax(0, 96px) minmax(0, 1fr) auto;
+            gap: 1.4rem;
+            align-items: center;
+        }
+
+        .profile-avatar {
+            width: 96px;
+            height: 96px;
+            border-radius: 28px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-size: 2rem;
+            background: linear-gradient(135deg, var(--role-primary), var(--role-secondary));
+            box-shadow: 0 18px 40px rgba(37, 99, 235, 0.24);
+        }
+
+        .profile-info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.9rem 1.6rem;
+            margin-top: 0.8rem;
+        }
+
+        .profile-label {
+            color: var(--dash-muted);
+            font-size: 0.68rem;
+            font-weight: 900;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        .profile-value {
+            color: var(--dash-text);
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+
+        .role-pill {
+            background: color-mix(in srgb, var(--role-accent) 70%, white);
+            color: var(--role-primary);
+            font-weight: 900;
+            font-size: 0.7rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .profile-actions {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .profile-section-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .profile-section-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--role-primary);
+            background: color-mix(in srgb, var(--role-accent) 70%, white);
+            font-size: 1.1rem;
+        }
+
+        .profile-section-title h3 {
+            margin: 0;
+        }
+
+        .profile-form .btn {
+            min-width: 180px;
+        }
+
+        .profile-form-actions {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .profile-helper {
+            color: var(--dash-muted);
+            font-size: 0.9rem;
+        }
+
+        .profile-toggle {
+            margin-top: 0.25rem;
+        }
+
+        .profile-toggle summary {
+            list-style: none;
+        }
+
+        .profile-toggle summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .profile-toggle-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .profile-info-grid .profile-bio {
+            grid-column: 1 / -1;
+        }
+
+        @keyframes profileRise {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 991.98px) {
+            .profile-hero {
+                grid-template-columns: minmax(0, 72px) minmax(0, 1fr);
+            }
+
+            .profile-actions {
+                grid-column: 1 / -1;
+                justify-content: flex-start;
+            }
+
+            .profile-info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-shell{% if request.user.role == 'DOCTOR' %} role-doctor{% elif request.user.role == 'RECEPTIONIST' %} role-reception{% endif %}">
+    {% include "dashboard/partials/_sidebar.html" %}
+    <div class="dashboard-main">
+        {% include "dashboard/partials/_topbar.html" with dashboard_eyebrow="Profile" dashboard_title="Your profile" dashboard_subtitle="Manage your details and security settings." %}
+        <div class="dashboard-content profile-content">
+            {% include "profile/partials/_base_profile.html" %}
+
+            {% if request.user.role == 'DOCTOR' %}
+                {% include "profile/partials/_doctor_profile.html" %}
+            {% elif request.user.role == 'PATIENT' %}
+                {% include "profile/partials/_patient_profile.html" %}
+            {% endif %}
+
+            {% include "profile/partials/_change_password.html" %}
+        </div>
+    </div>
+</div>
+{% endblock %}

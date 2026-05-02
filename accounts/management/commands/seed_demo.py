@@ -103,6 +103,15 @@ class Command(BaseCommand):
             first_name="Sara",
             last_name="Patient",
         )
+        patient_3 = self._get_or_create_user(
+            User,
+            username="patient3",
+            email="patient3@test.com",
+            role="PATIENT",
+            password=password,
+            first_name="Mariam",
+            last_name="Patient",
+        )
 
         # Profiles
         DoctorProfile.objects.get_or_create(
@@ -134,6 +143,13 @@ class Command(BaseCommand):
                 "blood_type": "O+",
             },
         )
+        PatientProfile.objects.get_or_create(
+            user=patient_3,
+            defaults={
+                "date_of_birth": date(1995, 11, 20),
+                "blood_type": "B+",
+            },
+        )
 
         # Doctor schedules (Mon-Fri)
         self._ensure_default_schedule(doctor_1)
@@ -147,6 +163,14 @@ class Command(BaseCommand):
         # Create a mix of appointments (past + future) and connected records
         self._seed_appointments(patient_1, doctor_1, today)
         self._seed_appointments(patient_2, doctor_2, today)
+        self._seed_reception_today_queue(
+            today=today,
+            doctor_1=doctor_1,
+            doctor_2=doctor_2,
+            patient_1=patient_1,
+            patient_2=patient_2,
+            patient_3=patient_3,
+        )
 
         # Walk-in patients for reception testing
         WalkInPatient.objects.get_or_create(
@@ -187,10 +211,18 @@ class Command(BaseCommand):
         first_name: str = "",
         last_name: str = "",
     ):
+        # Ensure the desired username is available; if taken by another email, find a unique one
+        uname = username
+        if User.objects.filter(username=uname).exclude(email=email).exists():
+            suffix = 2
+            while User.objects.filter(username=f"{uname}{suffix}").exists():
+                suffix += 1
+            uname = f"{uname}{suffix}"
+
         user, created = User.objects.get_or_create(
             email=email,
             defaults={
-                "username": username,
+                "username": uname,
                 "role": role,
                 "is_staff": is_staff,
                 "is_superuser": is_superuser,
@@ -200,8 +232,9 @@ class Command(BaseCommand):
         )
 
         changed = False
-        if user.username != username:
-            user.username = username
+        # Ensure stored username matches the (possibly adjusted) uname we used on creation
+        if user.username != uname:
+            user.username = uname
             changed = True
         if user.role != role:
             user.role = role
@@ -334,3 +367,45 @@ class Command(BaseCommand):
             message=f"Demo appointments ready for {patient.username}.",
             defaults={"is_read": False},
         )
+
+    def _seed_reception_today_queue(self, *, today, doctor_1, doctor_2, patient_1, patient_2, patient_3):
+        """Seed same-day reception statuses for dashboard flow testing."""
+        doctor_1_slots = list(
+            AppointmentSlot.objects.filter(doctor=doctor_1, date=today, is_booked=False)
+            .order_by("start_time")[:2]
+        )
+        doctor_2_slots = list(
+            AppointmentSlot.objects.filter(doctor=doctor_2, date=today, is_booked=False)
+            .order_by("start_time")[:2]
+        )
+
+        slot_1 = doctor_1_slots[0] if len(doctor_1_slots) > 0 else None
+        slot_2 = doctor_1_slots[1] if len(doctor_1_slots) > 1 else None
+        slot_3 = doctor_2_slots[0] if len(doctor_2_slots) > 0 else None
+        slot_4 = doctor_2_slots[1] if len(doctor_2_slots) > 1 else None
+
+        self._upsert_today_appointment(patient_1, doctor_1, slot_1, Appointment.Status.CONFIRMED)
+        self._upsert_today_appointment(patient_2, doctor_1, slot_2, Appointment.Status.CONFIRMED)
+        self._upsert_today_appointment(patient_3, doctor_2, slot_3, Appointment.Status.CHECKED_IN)
+        self._upsert_today_appointment(patient_1, doctor_2, slot_4, Appointment.Status.CONFIRMED)
+
+    def _upsert_today_appointment(self, patient, doctor, slot, status):
+        if not slot:
+            return
+
+        appointment, created = Appointment.objects.get_or_create(
+            patient=patient,
+            slot=slot,
+            defaults={
+                "doctor": doctor,
+                "status": status,
+            },
+        )
+        if not created and appointment.status != status:
+            appointment.status = status
+            appointment.doctor = doctor
+            appointment.save(update_fields=["status", "doctor"])
+
+        if not slot.is_booked:
+            slot.is_booked = True
+            slot.save(update_fields=["is_booked"])

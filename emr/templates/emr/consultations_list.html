@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+
+{% block title %}Consultations | Doctor Portal{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --dash-bg: #f1f5f9;
+        --dash-surface: #ffffff;
+        --dash-sidebar: #f8fafc;
+        --dash-text: #0f172a;
+        --dash-muted: #64748b;
+        --dash-border: rgba(148, 163, 184, 0.24);
+        --dash-shadow-soft: 0 12px 34px rgba(15, 23, 42, 0.07);
+        --dash-radius: 22px;
+        --role-primary: #059669;
+        --role-secondary: #14b8a6;
+        --role-accent: #d1fae5;
+        --role-wash: rgba(20, 184, 166, 0.18);
+    }
+
+    .clinic-header, .clinic-footer { display: none; }
+    body { background: var(--dash-bg); color: var(--dash-text); }
+    .dashboard-shell {
+        min-height: 100vh;
+        background: radial-gradient(circle at 16% 0%, var(--role-wash), transparent 30rem),
+                    linear-gradient(120deg, rgba(255,255,255,0), rgba(255,255,255,0.62)),
+                    var(--dash-bg);
+    }
+    .dashboard-main {
+        margin-left: 300px; min-height: 100vh; padding: 34px clamp(22px, 4vw, 64px) 56px;
+    }
+    .dashboard-content { width: min(100%, 1380px); margin: 0 auto; }
+    .dashboard-sidebar {
+        position: fixed; inset: 0 auto 0 0; z-index: 30; width: 300px; height: 100vh;
+        display: flex; flex-direction: column; padding: 24px 16px; background: var(--dash-sidebar);
+        border-right: 1px solid rgba(203, 213, 225, 0.74);
+    }
+    .sidebar-brand { display: flex; align-items: center; gap: 12px; padding: 2px 4px 22px; }
+    .sidebar-logo {
+        width: 42px; height: 42px; display: inline-flex; align-items: center; justify-content: center;
+        border-radius: 15px; color: #fff; background: linear-gradient(135deg, var(--role-primary), var(--role-secondary));
+    }
+    .sidebar-kicker { font-size: 0.7rem; font-weight: 700; color: var(--dash-muted); }
+    .sidebar-title { font-size: 1rem; font-weight: 900; color: var(--dash-text); }
+    .sidebar-user { display: flex; align-items: center; gap: 12px; padding: 16px 12px; border: 1px solid var(--dash-border); border-radius: 15px; background: #fff; }
+    .sidebar-avatar { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 12px; background: rgba(241, 245, 249, 0.95); color: var(--role-primary); }
+    .sidebar-name { font-weight: 900; color: var(--dash-text); font-size: 0.9rem; }
+    .sidebar-meta { font-size: 0.75rem; color: var(--dash-muted); }
+    .sidebar-section-title { font-size: 0.75rem; font-weight: 900; color: var(--dash-muted); margin: 24px 0 12px; }
+    .sidebar-nav { display: flex; flex-direction: column; gap: 8px; }
+    .sidebar-link {
+        display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 13px;
+        border: 1px solid transparent; color: #475569; text-decoration: none; transition: all 180ms ease;
+    }
+    .sidebar-link i {
+        width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;
+        flex: 0 0 auto; border-radius: 13px; color: var(--role-primary); background: rgba(241, 245, 249, 0.95);
+    }
+    .sidebar-link strong { display: block; color: #334155; font-size: 0.94rem; font-weight: 900; }
+    .sidebar-link span { display: block; color: #94a3b8; font-size: 0.74rem; font-weight: 700; }
+    .sidebar-link.active, .sidebar-link:hover {
+        color: var(--role-primary); background: rgba(209, 250, 229, 0.55);
+        border-color: rgba(5, 150, 105, 0.28);
+    }
+    .sidebar-link.active i, .sidebar-link:hover i {
+        color: #fff; background: linear-gradient(135deg, var(--role-primary), var(--role-secondary));
+    }
+    .consultation-card {
+        border: 1px solid var(--dash-border); border-radius: var(--dash-radius);
+        background: rgba(255, 255, 255, 0.94); box-shadow: var(--dash-shadow-soft);
+        padding: 24px; margin-bottom: 18px; transition: all 180ms ease;
+    }
+    .consultation-card:hover { border-color: var(--role-primary); box-shadow: 0 16px 40px rgba(5, 150, 105, 0.15); }
+    .consultation-header {
+        display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;
+    }
+    .consultation-patient { font-size: 1.1rem; font-weight: 900; color: var(--dash-text); }
+    .consultation-date { font-size: 0.85rem; color: var(--dash-muted); }
+    .consultation-body { margin: 16px 0; }
+    .consultation-notes { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .note-section h4 { margin: 0 0 10px; font-size: 0.9rem; font-weight: 900; color: #334155; }
+    .note-section p { margin: 0; color: var(--dash-muted); font-size: 0.9rem; line-height: 1.6; }
+    .prescription-list { margin-top: 16px; }
+    .prescription-item {
+        display: grid; grid-template-columns: 1fr 0.7fr 0.7fr; gap: 16px;
+        padding: 10px 0; border-bottom: 1px solid var(--dash-border);
+    }
+    .prescription-item:last-child { border-bottom: none; }
+    .prescription-label { font-size: 0.75rem; font-weight: 700; color: var(--dash-muted); text-transform: uppercase; }
+    .prescription-value { font-weight: 600; color: var(--dash-text); }
+    .panel-empty {
+        text-align: center; padding: 64px 32px; border: 2px dashed var(--dash-border);
+        border-radius: var(--dash-radius); background: rgba(241, 245, 249, 0.5);
+    }
+    .panel-empty h3 { margin: 0 0 8px; color: var(--dash-text); }
+    .panel-empty p { margin: 0; color: var(--dash-muted); font-size: 0.9rem; }
+    .pagination { margin-top: 32px; text-align: center; }
+    .pagination a, .pagination span { 
+        display: inline-block; padding: 8px 12px; margin: 0 4px; 
+        border-radius: 8px; background: #fff; color: var(--role-primary); 
+        text-decoration: none; border: 1px solid var(--dash-border); 
+    }
+    .pagination .page-current { background: var(--role-primary); color: #fff; border-color: var(--role-primary); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-shell role-doctor">
+    {% include "dashboard/partials/_sidebar.html" %}
+    <main class="dashboard-main">
+        <div class="dashboard-content">
+            <div style="margin-bottom: 34px;">
+                <h1 style="font-size: 2rem; font-weight: 950; margin: 0 0 8px; color: var(--dash-text);">Consultations</h1>
+                <p style="margin: 0; color: var(--dash-muted); font-size: 0.95rem;">All your consultation notes and patient records</p>
+            </div>
+
+            {% if consultations %}
+                {% for consultation in consultations %}
+                <div class="consultation-card">
+                    <div class="consultation-header">
+                        <div>
+                            <div class="consultation-patient">
+                                {{ consultation.patient.get_full_name|default:consultation.patient.username }}
+                            </div>
+                            <div class="consultation-date">
+                                {{ consultation.appointment.slot.date|date:"M j, Y" }} at 
+                                {{ consultation.appointment.slot.start_time|time:"H:i" }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="consultation-body">
+                        <div class="consultation-notes">
+                            <div class="note-section">
+                                <h4>Symptoms & Notes</h4>
+                                <p>{{ consultation.symptoms_notes|linebreaks }}</p>
+                            </div>
+                            <div class="note-section">
+                                <h4>Diagnosis</h4>
+                                <p>{{ consultation.diagnosis|linebreaks }}</p>
+                            </div>
+                        </div>
+
+                        {% if consultation.prescriptions.all %}
+                        <div class="prescription-list">
+                            <h4 style="margin: 16px 0 10px; font-size: 0.9rem; font-weight: 900; color: #334155;">Prescriptions</h4>
+                            {% for prescription in consultation.prescriptions.all %}
+                            <div class="prescription-item">
+                                <div>
+                                    <div class="prescription-label">Medication</div>
+                                    <div class="prescription-value">{{ prescription.medication_name }}</div>
+                                </div>
+                                <div>
+                                    <div class="prescription-label">Dosage</div>
+                                    <div class="prescription-value">{{ prescription.dosage }}</div>
+                                </div>
+                                <div>
+                                    <div class="prescription-label">Duration</div>
+                                    <div class="prescription-value">{{ prescription.duration }}</div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+
+                {% if is_paginated %}
+                <div class="pagination">
+                    {% if page_obj.has_previous %}
+                        <a href="?page=1">&laquo; First</a>
+                        <a href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                    {% endif %}
+
+                    <span class="page-current">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}">Next</a>
+                        <a href="?page={{ page_obj.paginator.num_pages }}">Last &raquo;</a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            {% else %}
+            <div class="panel-empty">
+                <h3>No consultations yet</h3>
+                <p>Start by checking in patients and completing consultations from the Daily Queue.</p>
+            </div>
+            {% endif %}
+        </div>
+    </main>
+</div>
+{% endblock %}

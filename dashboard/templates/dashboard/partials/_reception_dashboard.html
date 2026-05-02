@@ -6,8 +6,8 @@
             <p>Coordinate arrivals, appointment creation, patient approvals, and live queue handoffs from one structured desk view.</p>
         </div>
         <div class="hero-actions">
-            <a href="#" class="dash-btn primary"><i class="bi bi-calendar-plus"></i>Create Appointment</a>
-            <a href="#" class="dash-btn secondary"><i class="bi bi-person-plus"></i>Add Walk-in</a>
+            <a href="{% url 'patient-booking' %}" class="dash-btn primary"><i class="bi bi-calendar-plus"></i>Create Appointment</a>
+            <a href="#walkin-form" class="dash-btn secondary"><i class="bi bi-person-plus"></i>Add Walk-in</a>
         </div>
     </section>
 
@@ -16,23 +16,23 @@
             <span class="metric-icon"><i class="bi bi-calendar2-check"></i></span>
             <div>
                 <div class="metric-label">Total Appointments</div>
-                <div class="metric-value">{{ total_patients_today|default:"42" }}</div>
+                <div class="metric-value">{{ total_patients_today }}</div>
                 <div class="metric-note">Desk traffic today</div>
             </div>
         </article>
         <article class="metric-card">
             <span class="metric-icon"><i class="bi bi-clock"></i></span>
             <div>
-                <div class="metric-label">Upcoming</div>
-                <div class="metric-value">{{ waiting_patients|default:"9" }}</div>
-                <div class="metric-note">Waiting patients</div>
+                <div class="metric-label">Pending</div>
+                <div class="metric-value">{{ pending_patients }}</div>
+                <div class="metric-note">Confirmed and waiting arrival</div>
             </div>
         </article>
         <article class="metric-card">
             <span class="metric-icon"><i class="bi bi-check2-circle"></i></span>
             <div>
-                <div class="metric-label">Completed</div>
-                <div class="metric-value">{{ checked_in_patients|default:"16" }}</div>
+                <div class="metric-label">Checked In</div>
+                <div class="metric-value">{{ checked_in_patients }}</div>
                 <div class="metric-note">Checked in</div>
             </div>
         </article>
@@ -40,7 +40,7 @@
             <span class="metric-icon"><i class="bi bi-broadcast"></i></span>
             <div>
                 <div class="metric-label">Active</div>
-                <div class="metric-value">{{ active_appointments|default:"5" }}</div>
+                <div class="metric-value">{{ active_appointments }}</div>
                 <div class="metric-note">Live clinic flow</div>
             </div>
         </article>
@@ -58,33 +58,42 @@
                 </div>
 
                 <div class="appointment-list">
-                    <div class="appointment-item">
-                        <div class="appointment-time">09:00</div>
-                        <span class="appointment-icon"><i class="bi bi-person-check"></i></span>
-                        <div>
-                            <div class="appointment-title">Hana Mahmoud</div>
-                            <div class="appointment-meta">Dr. Sarah Ahmed - Cardiology</div>
+                    {% if appointments %}
+                        {% for appt in appointments %}
+                        <div class="appointment-item" id="appt-{{ appt.id }}">
+                            <div class="appointment-time">{{ appt.slot.start_time|time:"H:i" }}</div>
+                            <span class="appointment-icon"><i class="bi bi-person-check"></i></span>
+                            <div>
+                                <div class="appointment-title">{{ appt.display_patient_name }}</div>
+                                <div class="appointment-meta">Dr. {{ appt.slot.doctor.first_name }} {{ appt.slot.doctor.last_name }}</div>
+                            </div>
+                            <div style="display:flex; gap:8px; align-items:center;">
+                                <span class="status-badge status-{{ appt.status|lower }}">{{ appt.get_status_display }}</span>
+                                {% if appt.status != 'COMPLETED' and appt.status != 'CANCELLED' %}
+                                {% if appt.status != 'CHECKED_IN' %}
+                                <form method="post" action="{% url 'reception:update_status' appt.id %}" style="display:inline;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="status" value="CHECKED_IN">
+                                    <button type="submit" class="btn btn-sm" style="border:1px solid #2563eb; background:white; color:#2563eb; padding:6px 10px; border-radius:6px;">CHECK IN</button>
+                                </form>
+                                {% endif %}
+                                <form method="post" action="{% url 'reception:update_status' appt.id %}" style="display:inline;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="status" value="COMPLETED">
+                                    <button type="submit" class="btn btn-sm" style="border:1px solid #10b981; background:white; color:#10b981; padding:6px 10px; border-radius:6px;">COMPLETE</button>
+                                </form>
+                                <form method="post" action="{% url 'reception:update_status' appt.id %}" style="display:inline;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="status" value="CANCELLED">
+                                    <button type="submit" class="btn btn-sm" style="border:1px solid #ef4444; background:white; color:#ef4444; padding:6px 10px; border-radius:6px;">CANCEL</button>
+                                </form>
+                                {% endif %}
+                            </div>
                         </div>
-                        <span class="status-badge status-active">Active</span>
-                    </div>
-                    <div class="appointment-item">
-                        <div class="appointment-time">10:30</div>
-                        <span class="appointment-icon"><i class="bi bi-calendar2-check"></i></span>
-                        <div>
-                            <div class="appointment-title">Karim Nabil</div>
-                            <div class="appointment-meta">Dr. Omar Hassan - Follow-up</div>
-                        </div>
-                        <span class="status-badge status-confirmed">Confirmed</span>
-                    </div>
-                    <div class="appointment-item">
-                        <div class="appointment-time">12:00</div>
-                        <span class="appointment-icon"><i class="bi bi-hourglass-split"></i></span>
-                        <div>
-                            <div class="appointment-title">Farah Tarek</div>
-                            <div class="appointment-meta">Dr. Laila Amin - New patient</div>
-                        </div>
-                        <span class="status-badge status-pending">Pending</span>
-                    </div>
+                        {% endfor %}
+                    {% else %}
+                        <p style="text-align:center; color:#999; padding:20px;">No appointments scheduled for today.</p>
+                    {% endif %}
                 </div>
             </article>
 
@@ -102,6 +111,7 @@
                     <div class="mini-tile"><i class="bi bi-receipt me-2"></i>Two invoices are ready for payment review</div>
                 </div>
             </article>
+
         </div>
 
         <aside class="dashboard-stack">
@@ -114,34 +124,62 @@
                     <div class="highlight-item">
                         <div>
                             <div class="highlight-label">Available doctors</div>
-                            <div class="highlight-value">6</div>
+                            <div class="highlight-value">{{ doctors|length }}</div>
                         </div>
                         <span class="status-badge status-confirmed">Good</span>
                     </div>
                     <div class="highlight-item">
                         <div>
-                            <div class="highlight-label">Waiting patients</div>
-                            <div class="highlight-value">{{ waiting_patients|default:"9" }}</div>
+                            <div class="highlight-label">Pending patients</div>
+                            <div class="highlight-value">{{ pending_patients }}</div>
                         </div>
                         <span class="status-badge status-pending">Pending</span>
                     </div>
                     <div class="highlight-item">
                         <div>
                             <div class="highlight-label">Checked in</div>
-                            <div class="highlight-value">{{ checked_in_patients|default:"16" }}</div>
+                            <div class="highlight-value">{{ checked_in_patients }}</div>
                         </div>
                         <span class="status-badge status-live">Info</span>
                     </div>
                 </div>
             </article>
 
+            <article class="side-card walkin-panel" id="walkin-form">
+                <div class="side-heading">
+                    <h2 class="side-title">Add walk-in patient</h2>
+                    <span class="section-kicker">Walk-in</span>
+                </div>
+                <p class="side-copy">Register emergency and non-booked arrivals directly from this panel.</p>
+                <form method="post" action="{% url 'reception:walk_in' %}" class="walkin-form">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Name</label>
+                        {{ walkin_form.name }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Phone</label>
+                        {{ walkin_form.phone_number }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Doctor</label>
+                        {{ walkin_form.doctor }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Notes</label>
+                        {{ walkin_form.notes }}
+                    </div>
+                    <button type="submit" class="walkin-submit">Save Walk-in</button>
+                </form>
+            </article>
+
             <article class="side-card">
                 <h2 class="side-title">Quick actions</h2>
                 <p class="side-copy">Use the overview as the starting point, then move into detailed desk tasks.</p>
                 <div class="action-list">
-                    <a href="#" class="action-link featured"><span><i class="bi bi-person-check me-2"></i>Check-in patient</span><i class="bi bi-plus"></i></a>
-                    <a href="#" class="action-link"><span><i class="bi bi-person-plus me-2"></i>Add walk-in</span><i class="bi bi-arrow-right"></i></a>
-                    <a href="#" class="action-link"><span><i class="bi bi-calendar-plus me-2"></i>Create appointment</span><i class="bi bi-arrow-right"></i></a>
+                    <a href="#appt-{{ appointments.0.id|default:'' }}" class="action-link featured"><span><i class="bi bi-person-check me-2"></i>Check-in patient</span><i class="bi bi-plus"></i></a>
+                    <a href="#walkin-form" class="action-link"><span><i class="bi bi-person-plus me-2"></i>Add walk-in</span><i class="bi bi-arrow-right"></i></a>
+                    <a href="{% url 'patient-booking' %}" class="action-link"><span><i class="bi bi-calendar-plus me-2"></i>Create appointment</span><i class="bi bi-arrow-right"></i></a>
                 </div>
             </article>
         </aside>

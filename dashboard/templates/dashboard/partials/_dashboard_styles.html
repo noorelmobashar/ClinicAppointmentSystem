@@ -150,10 +150,30 @@
         line-height: 1.15;
     }
 
-    .sidebar-role {
+    .sidebar-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-top: 6px;
+    }
+
+    .sidebar-role-pill {
+        align-self: flex-start;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--role-accent) 70%, white);
+        color: var(--role-primary);
+        font-size: 0.68rem;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .sidebar-email {
         color: var(--dash-muted);
-        font-size: 0.82rem;
+        font-size: 0.8rem;
         font-weight: 700;
+        line-height: 1.2;
         word-break: break-word;
     }
 
