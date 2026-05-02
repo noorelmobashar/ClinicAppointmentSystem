@@ -64,10 +64,10 @@ class Appointment(models.Model):
         related_name="doctor_appointments",
     )
 
-    slot = models.OneToOneField(
+    slot = models.ForeignKey(
         AppointmentSlot,
         on_delete=models.CASCADE,
-        related_name="appointment",
+        related_name="appointments",
     )
 
     status = models.CharField(
