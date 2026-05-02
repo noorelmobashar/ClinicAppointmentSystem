@@ -4,8 +4,10 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
+from django.utils import timezone
+
 from accounts.models import DoctorProfile
-from appointments.models import AppointmentSlot
+from appointments.models import AppointmentSlot, DoctorSchedule
 
 
 class BookingViewsTests(TestCase):
@@ -75,3 +77,63 @@ class BookingViewsTests(TestCase):
         self.assertContains(response, "Cardiology")
         self.assertContains(response, "Heart specialist")
         self.assertContains(response, "$300.00")
+
+
+class DoctorScheduleSignalTests(TestCase):
+    def test_saving_schedule_generates_future_slots(self):
+        user_model = get_user_model()
+        doctor = user_model.objects.create_user(
+            username="doctor_schedule",
+            email="doctor_schedule@example.com",
+            password="pass12345",
+            role="DOCTOR",
+        )
+
+        today = timezone.localdate()
+        target_weekday = (today.weekday() + 1) % 7
+
+        DoctorSchedule.objects.create(
+            doctor=doctor,
+            day_of_week=target_weekday,
+            start_time=time(9, 0),
+            end_time=time(10, 0),
+            slot_duration_minutes=30,
+        )
+
+        self.assertTrue(
+            AppointmentSlot.objects.filter(
+                doctor=doctor,
+                date__gt=today,
+            ).exists()
+        )
+
+    def test_deleting_schedule_removes_future_unbooked_slots(self):
+        user_model = get_user_model()
+        doctor = user_model.objects.create_user(
+            username="doctor_schedule_delete",
+            email="doctor_schedule_delete@example.com",
+            password="pass12345",
+            role="DOCTOR",
+        )
+
+        today = timezone.localdate()
+        target_weekday = (today.weekday() + 1) % 7
+
+        schedule = DoctorSchedule.objects.create(
+            doctor=doctor,
+            day_of_week=target_weekday,
+            start_time=time(9, 0),
+            end_time=time(10, 0),
+            slot_duration_minutes=30,
+        )
+
+        self.assertTrue(AppointmentSlot.objects.filter(doctor=doctor).exists())
+
+        schedule.delete()
+
+        self.assertFalse(
+            AppointmentSlot.objects.filter(
+                doctor=doctor,
+                date__gt=today,
+            ).exists()
+        )
