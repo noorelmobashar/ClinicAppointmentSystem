@@ -42,16 +42,15 @@ def patient_booking(request):
     })
 
 
-@transaction.atomic
 @login_required
 def book_appointment(request, slot_id):
     if request.method != "POST":
         return HttpResponse("Method not allowed", status=405)
 
-    slot = AppointmentSlot.objects.select_for_update().get(id=slot_id)
+    slot = AppointmentSlot.objects.get(id=slot_id)
 
     if slot.is_booked:
-        return HttpResponse("Already booked")
+        return JsonResponse({"error": "The session is already booked by another user."}, status=400)
 
     exists = Appointment.objects.filter(
         patient=request.user,
@@ -60,19 +59,12 @@ def book_appointment(request, slot_id):
     ).exists()
 
     if exists:
-        return HttpResponse("You already booked this time")
+        return JsonResponse({"error": "You already booked this time"}, status=400)
 
-    Appointment.objects.create(
-        patient=request.user,
-        doctor=slot.doctor,
-        slot=slot,
-        status=Appointment.Status.AWAITING_PAYMENT,
-    )
-
-    slot.is_booked = True
-    slot.save()
-
-    return HttpResponse("Booked successfully")
+    # Do not mark as booked or create appointment until payment succeeds
+    return JsonResponse({
+        "redirect": f"/payments/checkout/{slot.id}/"
+    })
 
 
 @login_required
