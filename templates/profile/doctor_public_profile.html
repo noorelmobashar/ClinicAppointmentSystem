@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+
+{% block title %}Doctor Profile | Clinic System{% endblock %}
+
+{% block extra_css %}
+{% include "dashboard/partials/_dashboard_styles.html" %}
+<style>
+    .doctor-profile-content {
+        display: grid;
+        gap: 1.5rem;
+        padding-bottom: 2rem;
+        max-width: 1100px;
+    }
+
+    .doctor-profile-card {
+        border: 1px solid rgba(148, 163, 184, 0.22);
+        border-radius: 28px;
+        background: rgba(255, 255, 255, 0.96);
+        box-shadow: 0 22px 56px rgba(15, 23, 42, 0.09);
+        padding: clamp(1.5rem, 2.6vw, 2rem);
+    }
+
+    .doctor-hero {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        gap: 1.25rem;
+        align-items: center;
+    }
+
+    .doctor-avatar {
+        width: 90px;
+        height: 90px;
+        border-radius: 26px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: 2rem;
+        background: linear-gradient(135deg, #0f172a, #2563eb 58%, #06b6d4);
+    }
+
+    .doctor-hero h1 {
+        margin: 0;
+        font-size: clamp(1.7rem, 3vw, 2.5rem);
+        font-weight: 800;
+    }
+
+    .doctor-hero p {
+        margin: 0.45rem 0 0;
+        color: var(--clinic-muted);
+    }
+
+    .doctor-cta {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .doctor-details-grid,
+    .slot-preview {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1rem;
+    }
+
+    .detail-item,
+    .slot-item {
+        padding: 1rem;
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        border-radius: 20px;
+        background: #fff;
+    }
+
+    .detail-label {
+        color: #94a3b8;
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+    }
+
+    .detail-value {
+        margin-top: 0.45rem;
+        color: var(--clinic-text);
+        font-size: 1rem;
+        font-weight: 800;
+    }
+
+    .bio-copy {
+        margin: 0;
+        color: var(--clinic-muted);
+        line-height: 1.7;
+    }
+
+    @media (max-width: 991.98px) {
+        .doctor-hero,
+        .doctor-details-grid,
+        .slot-preview {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-shell">
+    {% include "dashboard/partials/_sidebar.html" %}
+    <div class="dashboard-main">
+        {% include "dashboard/partials/_topbar.html" %}
+
+        <div class="dashboard-content doctor-profile-content">
+            <section class="doctor-profile-card">
+                <div class="doctor-hero">
+                    <div class="doctor-avatar">
+                        <i class="bi bi-person-badge"></i>
+                    </div>
+                    <div>
+                        <h1>Dr. {{ doctor.get_full_name|default:doctor.username }}</h1>
+                        <p>{{ doctor_profile.specialty|default:"Specialty not specified" }}</p>
+                    </div>
+                    <div class="doctor-cta">
+                        <a class="btn btn-primary" href="{% url 'patient-booking' %}?doctor={{ doctor.id }}">
+                            <i class="bi bi-calendar2-check me-1"></i>Book visit
+                        </a>
+                        <a class="btn btn-outline-primary" href="{% url 'patient-booking' %}">
+                            <i class="bi bi-arrow-left me-1"></i>Back to booking
+                        </a>
+                    </div>
+                </div>
+            </section>
+
+            <section class="doctor-profile-card">
+                <div class="section-head">
+                    <div>
+                        <h2>Professional Details</h2>
+                        <p>All information on this page is loaded from doctor and appointment records.</p>
+                    </div>
+                </div>
+
+                <div class="doctor-details-grid">
+                    <div class="detail-item">
+                        <div class="detail-label">Specialty</div>
+                        <div class="detail-value">{{ doctor_profile.specialty|default:"Not specified" }}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Consultation Fee</div>
+                        <div class="detail-value">${{ doctor_profile.consultation_fee|default_if_none:0|floatformat:2 }}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Email</div>
+                        <div class="detail-value">{{ doctor.email }}</div>
+                    </div>
+                </div>
+
+                <div class="detail-item mt-3">
+                    <div class="detail-label">Description</div>
+                    <p class="bio-copy mt-2">{{ doctor_profile.bio|default:"No description added yet." }}</p>
+                </div>
+            </section>
+
+            <section class="doctor-profile-card">
+                <div class="section-head">
+                    <div>
+                        <h2>Upcoming Available Slots</h2>
+                        <p>These are the next unbooked appointment slots for this doctor.</p>
+                    </div>
+                </div>
+
+                {% if upcoming_slots %}
+                    <div class="slot-preview">
+                        {% for slot in upcoming_slots %}
+                            <div class="slot-item">
+                                <div class="detail-label">Slot</div>
+                                <div class="detail-value">{{ slot.date|date:"M d, Y" }}</div>
+                                <div class="mt-2 text-muted">{{ slot.start_time|time:"H:i" }} - {{ slot.end_time|time:"H:i" }}</div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="detail-item">
+                        <div class="detail-value">No upcoming free slots are available right now.</div>
+                    </div>
+                {% endif %}
+            </section>
+        </div>
+    </div>
+</div>
+{% endblock %}

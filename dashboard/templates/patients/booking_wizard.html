@@ -39,7 +39,8 @@
 
     .wizard-kicker,
     .step-badge,
-    .info-label {
+    .info-label,
+    .doctor-meta-label {
         letter-spacing: 0.12em;
         text-transform: uppercase;
     }
@@ -109,7 +110,8 @@
         line-height: 1.55;
     }
 
-    .booking-body {
+    .booking-body,
+    .booking-side-card {
         padding: 1.6rem;
     }
 
@@ -135,10 +137,16 @@
         line-height: 1.65;
     }
 
+    .search-grid,
     .field-grid {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 1rem;
+    }
+
+    .search-grid {
+        grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) auto;
+        align-items: end;
     }
 
     .field-block label {
@@ -147,8 +155,102 @@
         font-weight: 800;
     }
 
+    .doctor-results-bar {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        align-items: center;
+        margin-top: 1.2rem;
+    }
+
+    .doctor-count {
+        color: var(--clinic-muted);
+        font-weight: 700;
+    }
+
+    .doctor-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+        margin-top: 1.2rem;
+    }
+
+    .doctor-card {
+        position: relative;
+        padding: 1.25rem;
+        border: 1px solid rgba(148, 163, 184, 0.22);
+        border-radius: 24px;
+        background: linear-gradient(180deg, rgba(248, 250, 252, 0.95), rgba(255, 255, 255, 1));
+        transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+    }
+
+    .doctor-card:hover {
+        transform: translateY(-2px);
+        border-color: rgba(37, 99, 235, 0.32);
+        box-shadow: 0 18px 34px rgba(15, 23, 42, 0.08);
+    }
+
+    .doctor-card.active {
+        border-color: #1d4ed8;
+        box-shadow: 0 18px 38px rgba(37, 99, 235, 0.16);
+        background: linear-gradient(180deg, rgba(239, 246, 255, 0.96), rgba(255, 255, 255, 1));
+    }
+
+    .doctor-top {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+
+    .doctor-name {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 800;
+        color: var(--clinic-text);
+    }
+
+    .doctor-specialty {
+        margin-top: 0.4rem;
+        color: #1d4ed8;
+        font-weight: 700;
+    }
+
+    .doctor-price {
+        min-width: 6rem;
+        padding: 0.7rem 0.9rem;
+        border-radius: 18px;
+        background: rgba(15, 23, 42, 0.04);
+        text-align: center;
+    }
+
+    .doctor-meta-label {
+        color: #94a3b8;
+        font-size: 0.68rem;
+        font-weight: 900;
+    }
+
+    .doctor-meta-value {
+        margin-top: 0.35rem;
+        color: var(--clinic-text);
+        font-weight: 800;
+    }
+
+    .doctor-bio {
+        margin: 1rem 0 0;
+        color: var(--clinic-muted);
+        line-height: 1.65;
+    }
+
+    .doctor-actions {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        margin-top: 1.2rem;
+    }
+
     .slot-panel {
-        margin-top: 1.3rem;
+        margin-top: 1.5rem;
         padding: 1.25rem;
         border: 1px solid rgba(148, 163, 184, 0.2);
         border-radius: 24px;
@@ -187,16 +289,13 @@
         box-shadow: 0 16px 32px rgba(37, 99, 235, 0.22);
     }
 
-    .slot-empty {
+    .slot-empty,
+    .empty-state {
         padding: 1.15rem;
         border: 1px dashed rgba(148, 163, 184, 0.45);
         border-radius: 18px;
         color: var(--clinic-muted);
         text-align: center;
-    }
-
-    .booking-side-card {
-        padding: 1.5rem;
     }
 
     .summary-card {
@@ -229,29 +328,12 @@
         width: 100%;
     }
 
-    .mini-list {
-        display: grid;
-        gap: 0.8rem;
-        margin: 1rem 0 0;
-        padding: 0;
-        list-style: none;
-    }
-
-    .mini-list li {
-        display: flex;
-        gap: 0.7rem;
-        color: var(--clinic-muted);
-        line-height: 1.55;
-    }
-
-    .mini-list i {
-        color: #0891b2;
-    }
-
     @media (max-width: 991.98px) {
         .booking-grid,
         .steps-row,
-        .field-grid {
+        .doctor-grid,
+        .field-grid,
+        .search-grid {
             grid-template-columns: 1fr;
         }
     }
@@ -263,8 +345,13 @@
     }
 
     @media (max-width: 575.98px) {
-        .slot-grid {
+        .slot-grid,
+        .doctor-actions {
             grid-template-columns: 1fr;
+        }
+
+        .doctor-top {
+            flex-direction: column;
         }
     }
 </style>
@@ -281,27 +368,24 @@
                 <div class="booking-main">
                     <section class="wizard-card wizard-hero">
                         <span class="wizard-kicker"><i class="bi bi-calendar-plus"></i> Appointment Booking</span>
-                        <h1>Choose a doctor, find an open time, and confirm the visit.</h1>
-                        <p>
-                            This page uses the existing slot API in the project. Pick a doctor and date first,
-                            then the available times will load automatically.
-                        </p>
+                        <h1>Find the right doctor, review the profile, and confirm an available visit.</h1>
+                        <p>Doctor cards, specialties, prices, descriptions, and available slots are loaded from the database.</p>
 
                         <div class="steps-row">
                             <article class="step-card">
                                 <span class="step-badge">1</span>
-                                <div class="step-title">Select doctor</div>
-                                <div class="step-copy">Start with the clinician you want to visit.</div>
+                                <div class="step-title">Search doctors</div>
+                                <div class="step-copy">Filter by doctor name or specialty.</div>
                             </article>
                             <article class="step-card">
                                 <span class="step-badge">2</span>
-                                <div class="step-title">Pick a date</div>
-                                <div class="step-copy">The page requests free slots for that day only.</div>
+                                <div class="step-title">Review profile</div>
+                                <div class="step-copy">Open the doctor profile or select the card directly.</div>
                             </article>
                             <article class="step-card">
                                 <span class="step-badge">3</span>
-                                <div class="step-title">Confirm slot</div>
-                                <div class="step-copy">Booking is sent directly to the appointment endpoint.</div>
+                                <div class="step-title">Choose a slot</div>
+                                <div class="step-copy">Pick a date, load free times, and confirm the visit.</div>
                             </article>
                         </div>
                     </section>
@@ -309,30 +393,85 @@
                     <section class="wizard-card booking-body">
                         <div class="section-head">
                             <div>
-                                <h2>Booking Form</h2>
-                                <p>Fields stay lightweight so the user can move from selection to confirmation quickly.</p>
+                                <h2>Search Doctors</h2>
+                                <p>Search results are loaded from real doctor and doctor profile records.</p>
                             </div>
                         </div>
 
-                        <form id="bookingWizardForm" novalidate>
-                            <div class="field-grid">
+                        <form method="get">
+                            <div class="search-grid">
                                 <div class="field-block">
-                                    <label for="doctorSelect">Doctor</label>
-                                    <select class="form-select" id="doctorSelect" required>
-                                        <option value="">Select a doctor</option>
-                                        {% for doctor in doctors %}
-                                            <option value="{{ doctor.id }}">
-                                                {% if doctor.doctor_profile %}
-                                                    {{ doctor.doctor_profile }}
-                                                {% else %}
-                                                    Dr. {{ doctor.get_full_name|default:doctor.username }}
-                                                {% endif %}
-                                            </option>
-                                        {% empty %}
-                                            <option value="">No doctors are available right now</option>
+                                    <label for="searchQuery">Doctor name or specialty</label>
+                                    <input class="form-control" type="text" id="searchQuery" name="q" value="{{ search_query }}" placeholder="Search by name or specialty">
+                                </div>
+                                <div class="field-block">
+                                    <label for="specialtyFilter">Specialty</label>
+                                    <select class="form-select" id="specialtyFilter" name="specialty">
+                                        <option value="">All specialties</option>
+                                        {% for specialty in specialties %}
+                                            <option value="{{ specialty }}" {% if specialty == selected_specialty %}selected{% endif %}>{{ specialty }}</option>
                                         {% endfor %}
                                     </select>
                                 </div>
+                                <div class="field-block">
+                                    <button class="btn btn-primary w-100" type="submit">
+                                        <i class="bi bi-search me-1"></i>Search
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+
+                        <div class="doctor-results-bar">
+                            <div class="doctor-count">{{ doctors|length }} doctor{{ doctors|pluralize }} found</div>
+                            {% if search_query or selected_specialty %}
+                                <a class="btn btn-outline-secondary btn-sm" href="{% url 'patient-booking' %}">Clear filters</a>
+                            {% endif %}
+                        </div>
+
+                        {% if doctors %}
+                            <div class="doctor-grid" id="doctorGrid">
+                                {% for doctor in doctors %}
+                                    <article
+                                        class="doctor-card{% if selected_doctor_id == doctor.id|stringformat:'s' %} active{% endif %}"
+                                        data-doctor-id="{{ doctor.id }}"
+                                        data-doctor-name="Dr. {{ doctor.get_full_name|default:doctor.username }}"
+                                        data-doctor-specialty="{{ doctor.doctor_profile.specialty|default:'Not specified' }}"
+                                        data-doctor-fee="${{ doctor.doctor_profile.consultation_fee|default_if_none:0|floatformat:2 }}"
+                                    >
+                                        <div class="doctor-top">
+                                            <div>
+                                                <h3 class="doctor-name">Dr. {{ doctor.get_full_name|default:doctor.username }}</h3>
+                                                <div class="doctor-specialty">{{ doctor.doctor_profile.specialty|default:"Not specified" }}</div>
+                                            </div>
+                                            <div class="doctor-price">
+                                                <div class="doctor-meta-label">Visit Price</div>
+                                                <div class="doctor-meta-value">${{ doctor.doctor_profile.consultation_fee|default_if_none:0|floatformat:2 }}</div>
+                                            </div>
+                                        </div>
+
+                                        <p class="doctor-bio">{{ doctor.doctor_profile.bio|default:"No description added yet." }}</p>
+
+                                        <div class="doctor-actions">
+                                            <button class="btn btn-primary select-doctor-btn" type="button" data-doctor-id="{{ doctor.id }}">
+                                                <i class="bi bi-calendar2-check me-1"></i>Book visit
+                                            </button>
+                                            <a class="btn btn-outline-primary" href="{% url 'doctor-public-profile' doctor.id %}">
+                                                <i class="bi bi-person-vcard me-1"></i>Visit profile
+                                            </a>
+                                        </div>
+                                    </article>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="empty-state mt-4">
+                                No doctors matched the current search.
+                            </div>
+                        {% endif %}
+
+                        <form id="bookingWizardForm" class="mt-4" novalidate>
+                            <input type="hidden" id="doctorSelect" value="{{ selected_doctor_id }}">
+
+                            <div class="field-grid">
                                 <div class="field-block">
                                     <label for="appointmentDate">Date</label>
                                     <input class="form-control" type="date" id="appointmentDate" min="{{ today }}" required>
@@ -343,12 +482,12 @@
                                 <div class="section-head mb-0">
                                     <div>
                                         <h2 class="h5 mb-0">Available Time Slots</h2>
-                                        <p class="mb-0">Choose a doctor and date to load the current free times.</p>
+                                        <p class="mb-0">Choose a doctor card and date to load current free times.</p>
                                     </div>
                                 </div>
 
                                 <div id="slotFeedback" class="slot-empty mt-3">
-                                    Select both fields to load appointment times.
+                                    Select a doctor card and date to load appointment times.
                                 </div>
                                 <div id="slotGrid" class="slot-grid d-none"></div>
                             </div>
@@ -359,7 +498,7 @@
                 <aside class="booking-side">
                     <section class="wizard-card booking-side-card">
                         <h2>Booking Summary</h2>
-                        <p class="side-copy">The right panel updates as the patient moves through the flow.</p>
+                        <p class="side-copy">The summary updates from the doctor card and the selected appointment slot.</p>
 
                         <div class="summary-card mt-4">
                             <div class="summary-item">
@@ -369,6 +508,14 @@
                             <div class="summary-item">
                                 <div class="info-label">Doctor</div>
                                 <div class="info-value" id="summaryDoctor">Not selected</div>
+                            </div>
+                            <div class="summary-item">
+                                <div class="info-label">Specialty</div>
+                                <div class="info-value" id="summarySpecialty">Not selected</div>
+                            </div>
+                            <div class="summary-item">
+                                <div class="info-label">Visit Price</div>
+                                <div class="info-value" id="summaryFee">Not selected</div>
                             </div>
                             <div class="summary-item">
                                 <div class="info-label">Date</div>
@@ -386,21 +533,6 @@
 
                         <div id="bookingResult" class="mt-3 text-muted small"></div>
                     </section>
-
-                    <section class="wizard-card booking-side-card">
-                        <h2>Before Confirming</h2>
-                        <p class="side-copy">A few useful reminders to keep the visit smoother for both patient and clinic.</p>
-
-                        <ul class="mini-list">
-                            <li><i class="bi bi-check2-circle"></i><span>Double-check the doctor and selected date before confirming.</span></li>
-                            <li><i class="bi bi-check2-circle"></i><span>Bring relevant reports or a short note about current symptoms.</span></li>
-                            <li><i class="bi bi-check2-circle"></i><span>Use the appointments page after booking to review upcoming visits.</span></li>
-                        </ul>
-
-                        <a class="btn btn-outline-primary w-100 mt-4" href="{% url 'my-appointments' %}">
-                            <i class="bi bi-journal-medical me-1"></i>Open my appointments
-                        </a>
-                    </section>
                 </aside>
             </div>
         </section>
@@ -416,15 +548,26 @@
         const confirmButton = document.getElementById("confirmBookingBtn");
         const bookingResult = document.getElementById("bookingResult");
         const summaryDoctor = document.getElementById("summaryDoctor");
+        const summarySpecialty = document.getElementById("summarySpecialty");
+        const summaryFee = document.getElementById("summaryFee");
         const summaryDate = document.getElementById("summaryDate");
         const summaryTime = document.getElementById("summaryTime");
+        const doctorCards = Array.from(document.querySelectorAll(".doctor-card"));
+        const selectButtons = Array.from(document.querySelectorAll(".select-doctor-btn"));
 
         let selectedSlotId = null;
         let selectedSlotTime = null;
 
+        function getSelectedDoctorCard() {
+            return doctorCards.find((card) => card.dataset.doctorId === doctorSelect.value) || null;
+        }
+
         function updateSummary() {
-            const doctorLabel = doctorSelect.options[doctorSelect.selectedIndex]?.text || "Not selected";
-            summaryDoctor.textContent = doctorSelect.value ? doctorLabel.trim() : "Not selected";
+            const selectedDoctor = getSelectedDoctorCard();
+
+            summaryDoctor.textContent = selectedDoctor ? selectedDoctor.dataset.doctorName : "Not selected";
+            summarySpecialty.textContent = selectedDoctor ? selectedDoctor.dataset.doctorSpecialty : "Not selected";
+            summaryFee.textContent = selectedDoctor ? selectedDoctor.dataset.doctorFee : "Not selected";
             summaryDate.textContent = dateInput.value || "Not selected";
             summaryTime.textContent = selectedSlotTime || "Not selected";
             confirmButton.disabled = !(doctorSelect.value && dateInput.value && selectedSlotId);
@@ -441,9 +584,28 @@
             updateSummary();
         }
 
+        function selectDoctor(doctorId) {
+            doctorSelect.value = doctorId;
+            doctorCards.forEach((card) => {
+                card.classList.toggle("active", card.dataset.doctorId === doctorId);
+            });
+            selectButtons.forEach((button) => {
+                const isActive = button.dataset.doctorId === doctorId;
+                button.classList.toggle("btn-primary", !isActive);
+                button.classList.toggle("btn-outline-primary", isActive);
+                button.innerHTML = isActive
+                    ? '<i class="bi bi-check2-circle me-1"></i>Selected'
+                    : '<i class="bi bi-calendar2-check me-1"></i>Book visit';
+            });
+            selectedSlotId = null;
+            selectedSlotTime = null;
+            updateSummary();
+            loadSlots();
+        }
+
         async function loadSlots() {
             if (!doctorSelect.value || !dateInput.value) {
-                resetSlots("Select both fields to load appointment times.");
+                resetSlots("Select a doctor card and date to load appointment times.");
                 return;
             }
 
@@ -452,9 +614,14 @@
             try {
                 const url = `{% url 'available-slots' %}?doctor=${encodeURIComponent(doctorSelect.value)}&date=${encodeURIComponent(dateInput.value)}`;
                 const response = await fetch(url, { headers: { "X-Requested-With": "XMLHttpRequest" } });
-                const slots = await response.json();
+                const data = await response.json();
+                const slots = Array.isArray(data.slots) ? data.slots : [];
 
-                if (!Array.isArray(slots) || slots.length === 0) {
+                if (data.consultation_fee) {
+                    summaryFee.textContent = `$${Number(data.consultation_fee).toFixed(2)}`;
+                }
+
+                if (slots.length === 0) {
                     resetSlots("No open slots were found for this doctor on the selected date.");
                     return;
                 }
@@ -514,16 +681,21 @@
             }
         }
 
-        doctorSelect.addEventListener("change", function () {
-            selectedSlotId = null;
-            selectedSlotTime = null;
-            updateSummary();
-            loadSlots();
+        selectButtons.forEach((button) => {
+            button.addEventListener("click", function () {
+                selectDoctor(button.dataset.doctorId);
+                dateInput.scrollIntoView({ behavior: "smooth", block: "center" });
+            });
         });
 
         dateInput.addEventListener("change", loadSlots);
         confirmButton.addEventListener("click", bookSlot);
-        updateSummary();
+
+        if (doctorSelect.value) {
+            selectDoctor(doctorSelect.value);
+        } else {
+            updateSummary();
+        }
     }());
 </script>
 {% endblock %}

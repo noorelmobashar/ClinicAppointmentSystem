@@ -6,6 +6,7 @@ from django.urls import reverse
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 
+from accounts.models import DoctorProfile
 from appointments.models import Appointment, AppointmentSlot
 from payments.models import PaymentTransaction
 import stripe
@@ -27,6 +28,12 @@ class PaymentsViewsTests(TestCase):
             email="doctor1@test.com",
             password="password123",
             role=User.Role.DOCTOR
+        )
+        DoctorProfile.objects.create(
+            user=self.doctor,
+            specialty="Cardiology",
+            bio="Heart specialist",
+            consultation_fee=Decimal("300.00"),
         )
         self.slot = AppointmentSlot.objects.create(
             doctor=self.doctor,
@@ -83,10 +90,12 @@ class PaymentsViewsTests(TestCase):
         mock_create.assert_called_once()
         call_kwargs = mock_create.call_args[1]
         self.assertEqual(call_kwargs["metadata"]["appointment_id"], str(self.appointment.id))
-        
+        self.assertEqual(call_kwargs["line_items"][0]["price_data"]["unit_amount"], 30000)
+
         # Check transaction created
         txn = PaymentTransaction.objects.get(appointment=self.appointment)
         self.assertEqual(txn.status, PaymentTransaction.Status.PENDING)
+        self.assertEqual(txn.amount, Decimal("300.00"))
 
     def test_create_checkout_session_slot_already_booked(self):
         self.client.force_login(self.patient)
@@ -115,6 +124,12 @@ class StripeWebhookTests(TestCase):
             password="password123",
             role=User.Role.DOCTOR
         )
+        DoctorProfile.objects.create(
+            user=self.doctor,
+            specialty="Dermatology",
+            bio="Skin specialist",
+            consultation_fee=Decimal("350.00"),
+        )
         self.slot = AppointmentSlot.objects.create(
             doctor=self.doctor,
             date=timezone.now().date(),
@@ -131,7 +146,7 @@ class StripeWebhookTests(TestCase):
         self.txn = PaymentTransaction.objects.create(
             appointment=self.appointment,
             stripe_checkout_id="cs_test_pending",
-            amount=Decimal("200.00"),
+            amount=Decimal("350.00"),
             status=PaymentTransaction.Status.PENDING,
         )
         self.webhook_url = reverse("stripe-webhook")

@@ -1,6 +1,7 @@
-import stripe
-from datetime import timedelta
 from decimal import Decimal
+from datetime import timedelta
+
+import stripe
 
 from django.conf import settings
 from django.contrib import messages
@@ -17,9 +18,6 @@ from .models import PaymentTransaction
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
-# Fixed consultation fee in EGP
-CONSULTATION_FEE = Decimal("200.00")
-
 
 @login_required
 def CreateCheckoutSessionView(request, appointment_id):
@@ -31,9 +29,14 @@ def CreateCheckoutSessionView(request, appointment_id):
     )
     
     slot = appointment.slot
+    consultation_fee = getattr(getattr(appointment.doctor, "doctor_profile", None), "consultation_fee", Decimal("0.00"))
 
     if slot.is_booked:
         messages.error(request, "The session is already booked by another user.")
+        return redirect("patient-booking")
+
+    if consultation_fee <= 0:
+        messages.error(request, "This doctor does not have a valid consultation fee.")
         return redirect("patient-booking")
 
     success_url = request.build_absolute_uri("/payments/success/") + "?session_id={CHECKOUT_SESSION_ID}"
@@ -49,10 +52,10 @@ def CreateCheckoutSessionView(request, appointment_id):
             {
                 "price_data": {
                     "currency": "egp",
-                    "unit_amount": int(CONSULTATION_FEE * 100),  # Stripe expects cents/piasters
+                    "unit_amount": int(consultation_fee * 100),
                     "product_data": {
                         "name": f"Consultation with {doctor_name}",
-                        "description": f"Appointment on {slot_date} at {slot_time}",
+                        "description": f"Appointment on {slot_date} at {slot_time} - EGP {consultation_fee}",
                     },
                 },
                 "quantity": 1,
@@ -71,7 +74,7 @@ def CreateCheckoutSessionView(request, appointment_id):
         appointment=appointment,
         defaults={
             'stripe_checkout_id': session.id,
-            'amount': CONSULTATION_FEE,
+            'amount': consultation_fee,
             'status': PaymentTransaction.Status.PENDING,
         }
     )

@@ -84,6 +84,16 @@ class Command(BaseCommand):
             last_name="Doctor",
         )
 
+        doctor_3 = self._get_or_create_user(
+            User,
+            username="doctor3",
+            email="doctor3@test.com",
+            role="DOCTOR",
+            password=password,
+            first_name="Karim",
+            last_name="Doctor",
+        )
+
         patient_1 = self._get_or_create_user(
             User,
             username="patient",
@@ -119,6 +129,7 @@ class Command(BaseCommand):
             defaults={
                 "specialty": "Cardiology",
                 "bio": "Experienced cardiologist with a focus on preventive care.",
+                "consultation_fee": Decimal("250.00"),
             },
         )
         DoctorProfile.objects.get_or_create(
@@ -126,6 +137,15 @@ class Command(BaseCommand):
             defaults={
                 "specialty": "Dermatology",
                 "bio": "Skin health and cosmetic dermatology consultations.",
+                "consultation_fee": Decimal("180.00"),
+            },
+        )
+        DoctorProfile.objects.get_or_create(
+            user=doctor_3,
+            defaults={
+                "specialty": "Internal Medicine",
+                "bio": "General internal medicine and follow-up care.",
+                "consultation_fee": Decimal("200.00"),
             },
         )
 
@@ -154,15 +174,18 @@ class Command(BaseCommand):
         # Doctor schedules (Mon-Fri)
         self._ensure_default_schedule(doctor_1)
         self._ensure_default_schedule(doctor_2)
+        self._ensure_default_schedule(doctor_3)
 
         # Generate slots for the next N days based on schedules
         today = timezone.localdate()
         self._generate_slots_for_doctor(doctor_1, today, days)
         self._generate_slots_for_doctor(doctor_2, today, days)
+        self._generate_slots_for_doctor(doctor_3, today, days)
 
         # Create a mix of appointments (past + future) and connected records
         self._seed_appointments(patient_1, doctor_1, today)
         self._seed_appointments(patient_2, doctor_2, today)
+        self._seed_appointments(patient_3, doctor_3, today)
         self._seed_reception_today_queue(
             today=today,
             doctor_1=doctor_1,
@@ -194,6 +217,11 @@ class Command(BaseCommand):
             user=receptionist,
             message="2 walk-in patients added for today's queue.",
             defaults={"is_read": False},
+        )
+        Notification.objects.get_or_create(
+            user=doctor_1,
+            message="Demo: new appointment requests are waiting for review.",
+            defaults={"is_read": True},
         )
 
         self.stdout.write(self.style.SUCCESS("Demo data seeded."))
@@ -264,15 +292,40 @@ class Command(BaseCommand):
     def _ensure_default_schedule(self, doctor):
         # Mon-Fri 09:00 to 17:00, 30-minute slots
         for dow in range(0, 5):
-            DoctorSchedule.objects.get_or_create(
-                doctor=doctor,
-                day_of_week=dow,
-                defaults={
-                    "start_time": timezone.datetime(2000, 1, 1, 9, 0).time(),
-                    "end_time": timezone.datetime(2000, 1, 1, 17, 0).time(),
-                    "slot_duration_minutes": 30,
-                },
-            )
+            default_start = timezone.datetime(2000, 1, 1, 9, 0).time()
+            default_end = timezone.datetime(2000, 1, 1, 17, 0).time()
+            default_duration = 30
+
+            schedules_qs = DoctorSchedule.objects.filter(doctor=doctor, day_of_week=dow).order_by("id")
+            schedule = schedules_qs.first()
+
+            if schedule is None:
+                DoctorSchedule.objects.create(
+                    doctor=doctor,
+                    day_of_week=dow,
+                    start_time=default_start,
+                    end_time=default_end,
+                    slot_duration_minutes=default_duration,
+                )
+                continue
+
+            extra_ids = list(schedules_qs.values_list("id", flat=True)[1:])
+            if extra_ids:
+                DoctorSchedule.objects.filter(id__in=extra_ids).delete()
+
+            updated_fields = []
+            if schedule.start_time != default_start:
+                schedule.start_time = default_start
+                updated_fields.append("start_time")
+            if schedule.end_time != default_end:
+                schedule.end_time = default_end
+                updated_fields.append("end_time")
+            if schedule.slot_duration_minutes != default_duration:
+                schedule.slot_duration_minutes = default_duration
+                updated_fields.append("slot_duration_minutes")
+
+            if updated_fields:
+                schedule.save(update_fields=updated_fields)
 
     def _generate_slots_for_doctor(self, doctor, start_day: date, days: int):
         schedules = DoctorSchedule.objects.filter(doctor=doctor)
@@ -358,6 +411,55 @@ class Command(BaseCommand):
                     "stripe_checkout_id": f"demo_{uuid.uuid4().hex}",
                     "amount": Decimal("250.00"),
                     "status": PaymentTransaction.Status.PENDING,
+                },
+            )
+
+        # Pick another future slot for requested appointment
+        requested_day = today + timedelta(days=2)
+        requested_slot = (
+            AppointmentSlot.objects.filter(doctor=doctor, date=requested_day, is_booked=False)
+            .order_by("start_time")
+            .first()
+        )
+        if requested_slot:
+            appt, created = Appointment.objects.get_or_create(
+                patient=patient,
+                slot=requested_slot,
+                defaults={
+                    "doctor": doctor,
+                    "status": Appointment.Status.REQUESTED,
+                },
+            )
+            if created:
+                requested_slot.is_booked = True
+                requested_slot.save(update_fields=["is_booked"])
+
+        # Pick another future slot for cancelled appointment with a failed payment record
+        cancelled_day = today + timedelta(days=3)
+        cancelled_slot = (
+            AppointmentSlot.objects.filter(doctor=doctor, date=cancelled_day, is_booked=False)
+            .order_by("start_time")
+            .first()
+        )
+        if cancelled_slot:
+            appt, created = Appointment.objects.get_or_create(
+                patient=patient,
+                slot=cancelled_slot,
+                defaults={
+                    "doctor": doctor,
+                    "status": Appointment.Status.CANCELLED,
+                },
+            )
+            if created:
+                cancelled_slot.is_booked = True
+                cancelled_slot.save(update_fields=["is_booked"])
+
+            PaymentTransaction.objects.get_or_create(
+                appointment=appt,
+                defaults={
+                    "stripe_checkout_id": f"demo_{uuid.uuid4().hex}",
+                    "amount": Decimal("150.00"),
+                    "status": PaymentTransaction.Status.FAILED,
                 },
             )
 
