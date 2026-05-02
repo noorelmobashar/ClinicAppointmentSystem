@@ -2,9 +2,12 @@
 from django.contrib import admin
 from django.urls import path, include
 from django.views.generic import TemplateView
+from django.views.generic.base import RedirectView
+from django.templatetags.static import static
 
 urlpatterns = [
     path('', TemplateView.as_view(template_name='home.html'), name='home'),
+    path('favicon.ico', RedirectView.as_view(url=static('favicon.svg'), permanent=True)),
     path('admin/', admin.site.urls),
     path('accounts/', include('accounts.urls')),
     path('dashboard/', include('dashboard.urls')),
