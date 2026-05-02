@@ -25,6 +25,7 @@ class DoctorProfile(models.Model):
     )
     specialty = models.CharField(max_length=100)
     bio = models.TextField(blank=True)
+    consultation_fee = models.DecimalField(max_digits=8, decimal_places=2, default=0)
 
     def __str__(self):
         return f"Dr. {self.user.get_full_name() or self.user.username}"

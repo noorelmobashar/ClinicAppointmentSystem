@@ -1,0 +1,393 @@
+{% extends "base.html" %}
+
+{% block title %}Find a Doctor | Clinic System{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --doctor-bg: #f1f5f9;
+        --doctor-surface: #ffffff;
+        --doctor-text: #0f172a;
+        --doctor-muted: #64748b;
+        --doctor-border: rgba(148, 163, 184, 0.26);
+        --doctor-shadow: 0 18px 48px rgba(15, 23, 42, 0.12);
+        --doctor-shadow-soft: 0 12px 30px rgba(15, 23, 42, 0.08);
+    }
+
+    body {
+        background: var(--doctor-bg);
+    }
+
+    .doctor-header h1 {
+        font-family: "Outfit", "Segoe UI", sans-serif;
+        font-weight: 800;
+        letter-spacing: 0.01em;
+    }
+
+    .doctor-subtitle {
+        color: var(--doctor-muted);
+    }
+
+    .filter-card {
+        background: var(--doctor-surface);
+        border: 1px solid var(--doctor-border);
+        border-radius: 18px;
+        box-shadow: var(--doctor-shadow-soft);
+        padding: 1.4rem 1.5rem;
+    }
+
+    .filter-label {
+        font-size: 0.75rem;
+        font-weight: 800;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #1d4ed8;
+    }
+
+    .form-control,
+    .form-select {
+        border-radius: 14px;
+        border-color: var(--doctor-border);
+        padding: 0.75rem 0.95rem;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #60a5fa;
+        box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.15);
+    }
+
+    .doctor-card {
+        border-radius: 18px;
+        border: 1px solid var(--doctor-border);
+        background: var(--doctor-surface);
+        box-shadow: var(--doctor-shadow-soft);
+        padding: 1.6rem;
+        transition: transform 180ms ease, box-shadow 180ms ease;
+        height: 100%;
+    }
+
+    .doctor-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--doctor-shadow);
+    }
+
+    .doctor-avatar {
+        width: 54px;
+        height: 54px;
+        border-radius: 999px;
+        background: linear-gradient(135deg, #2563eb, #06b6d4);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #ffffff;
+        font-weight: 800;
+        font-size: 1.1rem;
+        box-shadow: 0 8px 18px rgba(37, 99, 235, 0.25);
+    }
+
+    .doctor-meta {
+        color: var(--doctor-muted);
+        font-size: 0.95rem;
+    }
+
+    .rating {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.2rem;
+        font-weight: 700;
+        color: #0f172a;
+    }
+
+    .rating i {
+        color: #f59e0b;
+    }
+
+    .fee {
+        font-weight: 800;
+        color: #1d4ed8;
+    }
+
+    .availability {
+        font-weight: 700;
+        font-size: 0.85rem;
+        padding: 0.35rem 0.75rem;
+        border-radius: 999px;
+    }
+
+    .availability.available {
+        background: rgba(16, 185, 129, 0.16);
+        color: #047857;
+    }
+
+    .availability.busy {
+        background: rgba(239, 68, 68, 0.14);
+        color: #b91c1c;
+    }
+
+    .btn-cta {
+        border-radius: 999px;
+        font-weight: 800;
+        padding: 0.65rem 1.1rem;
+    }
+
+    .empty-state {
+        border-radius: 18px;
+        border: 1px dashed rgba(148, 163, 184, 0.6);
+        padding: 2rem;
+        background: rgba(255, 255, 255, 0.9);
+        color: var(--doctor-muted);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="py-5 py-lg-6">
+    <div class="container">
+        <div class="doctor-header mb-4">
+            <h1 class="display-5 mb-2">Find a Doctor</h1>
+            <p class="doctor-subtitle mb-0">Browse specialists and book appointments easily</p>
+        </div>
+
+        <div class="filter-card mb-4">
+            <div class="d-flex flex-column flex-lg-row gap-3 align-items-lg-end">
+                <div class="flex-fill">
+                    <div class="filter-label mb-2">Search</div>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
+                        <input type="text" class="form-control border-start-0" placeholder="Search by doctor name">
+                    </div>
+                </div>
+                <div class="flex-fill">
+                    <div class="filter-label mb-2">Specialty</div>
+                    <select class="form-select">
+                        <option selected>All specialties</option>
+                        <option>Cardiology</option>
+                        <option>Dermatology</option>
+                        <option>Neurology</option>
+                        <option>Pediatrics</option>
+                        <option>General Medicine</option>
+                    </select>
+                </div>
+                <div class="flex-fill">
+                    <div class="filter-label mb-2">Availability</div>
+                    <select class="form-select">
+                        <option selected>Available Today</option>
+                        <option>This Week</option>
+                        <option>Next Week</option>
+                        <option>Anytime</option>
+                    </select>
+                </div>
+                <div class="flex-fill">
+                    <div class="filter-label mb-2">Rating</div>
+                    <select class="form-select">
+                        <option selected>4 stars & up</option>
+                        <option>3 stars & up</option>
+                        <option>All ratings</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="doctor-card">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="doctor-avatar">SA</div>
+                        <div>
+                            <h5 class="mb-0 fw-bold">Dr. Sara Ahmed</h5>
+                            <div class="doctor-meta">Cardiology</div>
+                        </div>
+                    </div>
+                    <p class="doctor-meta mb-3">Focused on preventive cardiology and long-term heart health plans.</p>
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="rating"><i class="bi bi-star-fill"></i>4.9</div>
+                        <div class="doctor-meta">8 years experience</div>
+                    </div>
+                    <div class="fee mb-3">Consultation Fee: $120.00</div>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <span class="availability available">Available Today</span>
+                        <button class="btn btn-primary btn-cta" type="button">
+                            <i class="bi bi-calendar-plus me-2"></i>Book Appointment
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="doctor-card">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="doctor-avatar">OM</div>
+                        <div>
+                            <h5 class="mb-0 fw-bold">Dr. Omar Hassan</h5>
+                            <div class="doctor-meta">Neurology</div>
+                        </div>
+                    </div>
+                    <p class="doctor-meta mb-3">Specializes in chronic migraines, nerve recovery, and neuro checks.</p>
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="rating"><i class="bi bi-star-fill"></i>4.8</div>
+                        <div class="doctor-meta">11 years experience</div>
+                    </div>
+                    <div class="fee mb-3">Consultation Fee: $150.00</div>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <span class="availability busy">Busy Today</span>
+                        <button class="btn btn-primary btn-cta" type="button">
+                            <i class="bi bi-calendar-plus me-2"></i>Book Appointment
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="doctor-card">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="doctor-avatar">MA</div>
+                        <div>
+                            <h5 class="mb-0 fw-bold">Dr. Mona Ali</h5>
+                            <div class="doctor-meta">Dermatology</div>
+                        </div>
+                    </div>
+                    <p class="doctor-meta mb-3">Skin health expert focused on acne care and non-invasive treatments.</p>
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="rating"><i class="bi bi-star-fill"></i>4.7</div>
+                        <div class="doctor-meta">6 years experience</div>
+                    </div>
+                    <div class="fee mb-3">Consultation Fee: $95.00</div>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <span class="availability available">Available Today</span>
+                        <button class="btn btn-primary btn-cta" type="button">
+                            <i class="bi bi-calendar-plus me-2"></i>Book Appointment
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="doctor-card">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="doctor-avatar">RH</div>
+                        <div>
+                            <h5 class="mb-0 fw-bold">Dr. Rania Hassan</h5>
+                            <div class="doctor-meta">Pediatrics</div>
+                        </div>
+                    </div>
+                    <p class="doctor-meta mb-3">Gentle pediatric care with a focus on growth milestones and wellness.</p>
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="rating"><i class="bi bi-star-fill"></i>4.9</div>
+                        <div class="doctor-meta">9 years experience</div>
+                    </div>
+                    <div class="fee mb-3">Consultation Fee: $110.00</div>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <span class="availability available">Available Today</span>
+                        <button class="btn btn-primary btn-cta" type="button">
+                            <i class="bi bi-calendar-plus me-2"></i>Book Appointment
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="doctor-card">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="doctor-avatar">YA</div>
+                        <div>
+                            <h5 class="mb-0 fw-bold">Dr. Youssef Adel</h5>
+                            <div class="doctor-meta">General Medicine</div>
+                        </div>
+                    </div>
+                    <p class="doctor-meta mb-3">Family physician offering holistic care and preventive screenings.</p>
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="rating"><i class="bi bi-star-fill"></i>4.6</div>
+                        <div class="doctor-meta">5 years experience</div>
+                    </div>
+                    <div class="fee mb-3">Consultation Fee: $75.00</div>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <span class="availability busy">Busy Today</span>
+                        <button class="btn btn-primary btn-cta" type="button">
+                            <i class="bi bi-calendar-plus me-2"></i>Book Appointment
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="doctor-card">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="doctor-avatar">LN</div>
+                        <div>
+                            <h5 class="mb-0 fw-bold">Dr. Layla Nabil</h5>
+                            <div class="doctor-meta">Cardiology</div>
+                        </div>
+                    </div>
+                    <p class="doctor-meta mb-3">Cardiac diagnostics with a focus on fast recovery care plans.</p>
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="rating"><i class="bi bi-star-fill"></i>4.8</div>
+                        <div class="doctor-meta">7 years experience</div>
+                    </div>
+                    <div class="fee mb-3">Consultation Fee: $130.00</div>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <span class="availability available">Available Today</span>
+                        <button class="btn btn-primary btn-cta" type="button">
+                            <i class="bi bi-calendar-plus me-2"></i>Book Appointment
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="doctor-card">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="doctor-avatar">FK</div>
+                        <div>
+                            <h5 class="mb-0 fw-bold">Dr. Farah Khaled</h5>
+                            <div class="doctor-meta">Dermatology</div>
+                        </div>
+                    </div>
+                    <p class="doctor-meta mb-3">Advanced aesthetic treatments with a focus on natural results.</p>
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="rating"><i class="bi bi-star-fill"></i>4.5</div>
+                        <div class="doctor-meta">4 years experience</div>
+                    </div>
+                    <div class="fee mb-3">Consultation Fee: $85.00</div>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <span class="availability busy">Busy Today</span>
+                        <button class="btn btn-primary btn-cta" type="button">
+                            <i class="bi bi-calendar-plus me-2"></i>Book Appointment
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="doctor-card">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="doctor-avatar">NS</div>
+                        <div>
+                            <h5 class="mb-0 fw-bold">Dr. Nada Saleh</h5>
+                            <div class="doctor-meta">Neurology</div>
+                        </div>
+                    </div>
+                    <p class="doctor-meta mb-3">Treating nerve disorders with a patient-first and data-driven approach.</p>
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="rating"><i class="bi bi-star-fill"></i>4.7</div>
+                        <div class="doctor-meta">10 years experience</div>
+                    </div>
+                    <div class="fee mb-3">Consultation Fee: $140.00</div>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <span class="availability available">Available Today</span>
+                        <button class="btn btn-primary btn-cta" type="button">
+                            <i class="bi bi-calendar-plus me-2"></i>Book Appointment
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="empty-state d-none text-center mt-4">
+            <i class="bi bi-search fs-1 mb-3"></i>
+            <h5 class="fw-bold">No doctors found</h5>
+            <p class="mb-0">Try adjusting your filters or search term to see more results.</p>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -16,8 +16,11 @@ from .forms import (
     BaseProfileForm,
     DoctorProfileForm,
     PatientProfileForm,
+    DoctorOnboardingForm,
+    PatientOnboardingForm,
 )
 from .models import CustomUser, DoctorProfile, PatientProfile
+from .utils.profile_completion import is_profile_complete
 from django.db import transaction
 # from .utils.return_testmail_recepient import map_to_testmail
 from .utils.verification_service import VerificationService
@@ -48,6 +51,8 @@ class CustomLoginView(View):
                 return render(request, 'accounts/login.html', {'form': form})
 
             login(request, user)
+            if not is_profile_complete(user):
+                return redirect('onboarding')
             return redirect('dashboard')  
 
         return render(request, 'accounts/login.html', {'form': form})
@@ -170,6 +175,58 @@ class LogoutView(View):
     def post(self, request):
         logout(request)
         return redirect("login")
+
+
+class OnboardingView(LoginRequiredMixin, View):
+    login_url = "login"
+
+    def _get_doctor_profile(self, user):
+        try:
+            return user.doctor_profile
+        except DoctorProfile.DoesNotExist:
+            return None
+
+    def _get_patient_profile(self, user):
+        try:
+            return user.patient_profile
+        except PatientProfile.DoesNotExist:
+            return None
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.role not in (CustomUser.Role.DOCTOR, CustomUser.Role.PATIENT):
+            return redirect("dashboard")
+        return super().dispatch(request, *args, **kwargs)
+
+    def get(self, request):
+        if is_profile_complete(request.user):
+            return redirect("dashboard")
+
+        if request.user.role == CustomUser.Role.DOCTOR:
+            form = DoctorOnboardingForm(instance=self._get_doctor_profile(request.user))
+            template_name = "onboarding/doctor_onboarding.html"
+        else:
+            form = PatientOnboardingForm(instance=self._get_patient_profile(request.user))
+            template_name = "onboarding/patient_onboarding.html"
+
+        return render(request, template_name, {"form": form})
+
+    def post(self, request):
+        if request.user.role == CustomUser.Role.DOCTOR:
+            profile = self._get_doctor_profile(request.user)
+            form = DoctorOnboardingForm(request.POST, instance=profile)
+            template_name = "onboarding/doctor_onboarding.html"
+        else:
+            profile = self._get_patient_profile(request.user)
+            form = PatientOnboardingForm(request.POST, instance=profile)
+            template_name = "onboarding/patient_onboarding.html"
+
+        if form.is_valid():
+            profile = form.save(commit=False)
+            profile.user = request.user
+            profile.save()
+            return redirect("dashboard")
+
+        return render(request, template_name, {"form": form})
 
 
 class ProfileView(LoginRequiredMixin, View):

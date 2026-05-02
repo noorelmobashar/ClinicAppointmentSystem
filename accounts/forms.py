@@ -1,6 +1,25 @@
 from django import forms
 from accounts.models import CustomUser, DoctorProfile, PatientProfile
 
+SPECIALTY_CHOICES = [
+    ("Cardiology", "Cardiology"),
+    ("Dermatology", "Dermatology"),
+    ("Neurology", "Neurology"),
+    ("Pediatrics", "Pediatrics"),
+    ("General Medicine", "General Medicine"),
+]
+
+BLOOD_TYPE_CHOICES = [
+    ("A+", "A+"),
+    ("A-", "A-"),
+    ("B+", "B+"),
+    ("B-", "B-"),
+    ("AB+", "AB+"),
+    ("AB-", "AB-"),
+    ("O+", "O+"),
+    ("O-", "O-"),
+]
+
 class LoginForm(forms.Form):
     email = forms.EmailField()
     password = forms.CharField()
@@ -58,7 +77,10 @@ class BaseProfileForm(forms.ModelForm):
 class DoctorProfileForm(forms.ModelForm):
     class Meta:
         model = DoctorProfile
-        fields = ["specialty", "bio"]
+        fields = ["specialty", "bio", "consultation_fee"]
+        widgets = {
+            "consultation_fee": forms.NumberInput(attrs={"step": "0.01"}),
+        }
 
 
 class PatientProfileForm(forms.ModelForm):
@@ -68,3 +90,47 @@ class PatientProfileForm(forms.ModelForm):
         widgets = {
             "date_of_birth": forms.DateInput(attrs={"type": "date"}),
         }
+
+
+class DoctorOnboardingForm(forms.ModelForm):
+    specialty = forms.ChoiceField(
+        choices=SPECIALTY_CHOICES,
+        widget=forms.Select(attrs={"class": "form-select"}),
+    )
+    bio = forms.CharField(
+        required=False,
+        widget=forms.Textarea(
+            attrs={
+                "class": "form-control",
+                "rows": 4,
+                "placeholder": "Share a short summary of your clinical focus.",
+            }
+        ),
+    )
+    consultation_fee = forms.DecimalField(
+        widget=forms.NumberInput(
+            attrs={
+                "class": "form-control",
+                "step": "0.01",
+                "placeholder": "Enter consultation fee",
+            }
+        ),
+    )
+
+    class Meta:
+        model = DoctorProfile
+        fields = ["specialty", "bio", "consultation_fee"]
+
+
+class PatientOnboardingForm(forms.ModelForm):
+    blood_type = forms.ChoiceField(
+        choices=BLOOD_TYPE_CHOICES,
+        widget=forms.Select(attrs={"class": "form-select"}),
+    )
+    date_of_birth = forms.DateField(
+        widget=forms.DateInput(attrs={"type": "date", "class": "form-control"}),
+    )
+
+    class Meta:
+        model = PatientProfile
+        fields = ["blood_type", "date_of_birth"]

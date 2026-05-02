@@ -46,6 +46,22 @@
                             </div>
                         {% endif %}
                     </div>
+                    <div>
+                        <label for="consultation_fee" class="profile-label">Consultation fee</label>
+                        <input
+                            type="number"
+                            name="consultation_fee"
+                            id="consultation_fee"
+                            step="0.01"
+                            class="form-control{% if doctor_profile_form and doctor_profile_form.errors.consultation_fee %} is-invalid{% endif %}"
+                            value="{{ doctor_profile_form.consultation_fee.value|default_if_none:'' }}"
+                        >
+                        {% if doctor_profile_form and doctor_profile_form.errors.consultation_fee %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in doctor_profile_form.errors.consultation_fee %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
                     <div class="profile-bio">
                         <label for="bio" class="profile-label">Bio</label>
                         <textarea
@@ -72,6 +88,10 @@
                 <div>
                     <div class="profile-label">Specialty</div>
                     <div class="profile-value">{{ doctor_profile.specialty|default:"Not set" }}</div>
+                </div>
+                <div>
+                    <div class="profile-label">Consultation fee</div>
+                    <div class="profile-value">${{ doctor_profile.consultation_fee|default_if_none:0|floatformat:2 }}</div>
                 </div>
                 <div class="profile-bio">
                     <div class="profile-label">Bio</div>

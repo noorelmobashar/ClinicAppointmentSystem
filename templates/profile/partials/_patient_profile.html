@@ -37,7 +37,7 @@
                             name="date_of_birth"
                             id="date_of_birth"
                             class="form-control{% if patient_profile_form and patient_profile_form.errors.date_of_birth %} is-invalid{% endif %}"
-                            value="{{ patient_profile_form.date_of_birth.value|default_if_none:'' }}"
+                            value="{% if patient_profile_form.is_bound %}{{ patient_profile_form.data.date_of_birth }}{% elif patient_profile.date_of_birth %}{{ patient_profile.date_of_birth|date:'Y-m-d' }}{% endif %}"
                             required
                         >
                         {% if patient_profile_form and patient_profile_form.errors.date_of_birth %}

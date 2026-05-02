@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.utils import timezone
@@ -7,10 +7,13 @@ from appointments.models import Appointment
 from reception.models import WalkInPatient
 from accounts.models import CustomUser
 from reception.forms import WalkInPatientForm
+from accounts.utils.profile_completion import is_profile_complete
 
 
 class DashboardView(LoginRequiredMixin, View):
     def get(self, request):
+        if not is_profile_complete(request.user):
+            return redirect("onboarding")
         context = {
             "current_section": "overview",
         }
