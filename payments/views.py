@@ -94,7 +94,7 @@ def StripeWebhookView(request):
 
     if event.type == "checkout.session.completed":
         session = event.data.object
-        appointment_id = session.metadata.get("appointment_id")
+        appointment_id = getattr(session.metadata, "appointment_id", None)
 
         if not appointment_id:
             return HttpResponse(status=200)
@@ -147,7 +147,7 @@ def StripeWebhookView(request):
 
     elif event.type in ["checkout.session.expired", "checkout.session.async_payment_failed"]:
         session = event.data.object
-        appointment_id = session.metadata.get("appointment_id")
+        appointment_id = getattr(session.metadata, "appointment_id", None)
         
         if appointment_id:
             with transaction.atomic():

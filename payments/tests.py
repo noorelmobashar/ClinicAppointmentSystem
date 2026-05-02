@@ -74,6 +74,7 @@ class PaymentsViewsTests(TestCase):
         
         mock_session = MagicMock()
         mock_session.url = "https://checkout.stripe.com/test-url"
+        mock_session.id = "cs_test_session_id"
         mock_create.return_value = mock_session
 
         response = self.client.get(self.checkout_url)
@@ -149,9 +150,7 @@ class StripeWebhookTests(TestCase):
         
         mock_session = MagicMock()
         mock_session.id = "cs_test_123"
-        mock_session.metadata = {
-            "appointment_id": str(self.appointment.id),
-        }
+        mock_session.metadata.appointment_id = str(self.appointment.id)
         mock_event.data.object = mock_session
         
         mock_construct.return_value = mock_event
@@ -181,9 +180,7 @@ class StripeWebhookTests(TestCase):
         mock_session = MagicMock()
         mock_session.id = "cs_test_456"
         mock_session.payment_intent = "pi_test_123"
-        mock_session.metadata = {
-            "appointment_id": str(self.appointment.id),
-        }
+        mock_session.metadata.appointment_id = str(self.appointment.id)
         mock_event.data.object = mock_session
         
         mock_construct.return_value = mock_event
@@ -206,9 +203,7 @@ class StripeWebhookTests(TestCase):
         mock_event.type = "checkout.session.expired"
         
         mock_session = MagicMock()
-        mock_session.metadata = {
-            "appointment_id": str(self.appointment.id),
-        }
+        mock_session.metadata.appointment_id = str(self.appointment.id)
         mock_event.data.object = mock_session
         
         mock_construct.return_value = mock_event
