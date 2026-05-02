@@ -29,7 +29,6 @@ class AppointmentAdmin(admin.ModelAdmin):
     search_fields = ('patient__username', 'patient__email', 'doctor__username', 'doctor__email')
     list_editable = ('status',)
     ordering = ('-slot__date', '-slot__start_time')
-    readonly_fields = ('created_at', 'updated_at')
     
     # Filter by doctor by default
     def get_queryset(self, request):

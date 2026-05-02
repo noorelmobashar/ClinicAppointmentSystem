@@ -1,12 +1,12 @@
 from django.contrib import admin
-from .models import PatientRegistration
+from .models import WalkInPatient
 
-@admin.register(PatientRegistration)
-class PatientRegistrationAdmin(admin.ModelAdmin):
-    list_display = ('patient', 'gender', 'date_of_birth', 'address', 'created_at')
-    list_filter = ('gender', 'date_of_birth')
-    search_fields = ('patient__username', 'patient__email', 'patient__phone_number', 'address')
-    readonly_fields = ('created_at', 'updated_at')
+@admin.register(WalkInPatient)
+class WalkInPatientAdmin(admin.ModelAdmin):
+    list_display = ('name', 'phone_number', 'notes', 'created_at')
+    list_filter = ('created_at',)
+    search_fields = ('name', 'phone_number')
+    readonly_fields = ('created_at',)
     
     # Filter by doctor by default
     def get_queryset(self, request):
