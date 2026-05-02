@@ -16,7 +16,7 @@
             <span class="metric-icon"><i class="bi bi-calendar2-check"></i></span>
             <div>
                 <div class="metric-label">Total Appointments</div>
-                <div class="metric-value">{{ total_appointments|default:"12" }}</div>
+                <div class="metric-value">{{ total_appointments|default:"0" }}</div>
                 <div class="metric-note">All clinic bookings</div>
             </div>
         </article>
@@ -24,7 +24,7 @@
             <span class="metric-icon"><i class="bi bi-clock-history"></i></span>
             <div>
                 <div class="metric-label">Upcoming</div>
-                <div class="metric-value">{{ upcoming_appointments|default:"2" }}</div>
+                <div class="metric-value">{{ upcoming_appointments|default:"0" }}</div>
                 <div class="metric-note">Scheduled visits</div>
             </div>
         </article>
@@ -32,7 +32,7 @@
             <span class="metric-icon"><i class="bi bi-check2-circle"></i></span>
             <div>
                 <div class="metric-label">Completed</div>
-                <div class="metric-value">{{ completed_visits|default:"8" }}</div>
+                <div class="metric-value">{{ completed_visits|default:"0" }}</div>
                 <div class="metric-note">Closed consultations</div>
             </div>
         </article>
@@ -40,7 +40,7 @@
             <span class="metric-icon"><i class="bi bi-activity"></i></span>
             <div>
                 <div class="metric-label">Active</div>
-                <div class="metric-value">{{ active_appointments|default:"1" }}</div>
+                <div class="metric-value">{{ active_appointments|default:"0" }}</div>
                 <div class="metric-note">Needs attention</div>
             </div>
         </article>
@@ -58,33 +58,39 @@
                 </div>
 
                 <div class="appointment-list">
-                    <div class="appointment-item">
-                        <div class="appointment-time">10:30</div>
-                        <span class="appointment-icon"><i class="bi bi-heart-pulse"></i></span>
-                        <div>
-                            <div class="appointment-title">Dr. Sarah Ahmed</div>
-                            <div class="appointment-meta">Cardiology consultation - Today</div>
+                    {% for appointment in recent_upcoming_appointments %}
+                        <div class="appointment-item">
+                            <div class="appointment-time">
+                                {% if appointment.slot.date == today %}
+                                    {{ appointment.slot.start_time|time:"H:i" }}
+                                {% else %}
+                                    {{ appointment.slot.date|date:"M j" }}
+                                {% endif %}
+                            </div>
+                            <span class="appointment-icon"><i class="bi bi-heart-pulse"></i></span>
+                            <div>
+                                <div class="appointment-title">
+                                    Dr. {{ appointment.doctor.get_full_name|default:appointment.doctor.username }}
+                                </div>
+                                <div class="appointment-meta">
+                                    {% if appointment.doctor.doctor_profile %}
+                                        {{ appointment.doctor.doctor_profile.specialty }} -
+                                    {% endif %}
+                                    {{ appointment.slot.date|date:"l, M j" }} at {{ appointment.slot.start_time|time:"H:i" }}
+                                </div>
+                            </div>
+                            <span class="status-badge {% if appointment.status == 'CONFIRMED' or appointment.status == 'COMPLETED' %}status-confirmed{% elif appointment.status == 'REQUESTED' or appointment.status == 'AWAITING_PAYMENT' %}status-pending{% else %}status-live{% endif %}">
+                                {{ appointment.get_status_display }}
+                            </span>
                         </div>
-                        <span class="status-badge status-confirmed">Confirmed</span>
-                    </div>
-                    <div class="appointment-item">
-                        <div class="appointment-time">May 2</div>
-                        <span class="appointment-icon"><i class="bi bi-clipboard2-pulse"></i></span>
-                        <div>
-                            <div class="appointment-title">Dr. Omar Hassan</div>
-                            <div class="appointment-meta">Follow-up visit - 1:00 PM</div>
+                    {% empty %}
+                        <div class="appointment-item">
+                            <div>
+                                <div class="appointment-title">No upcoming appointments</div>
+                                <div class="appointment-meta">Book a visit to see your next scheduled consultation here.</div>
+                            </div>
                         </div>
-                        <span class="status-badge status-pending">Pending</span>
-                    </div>
-                    <div class="appointment-item">
-                        <div class="appointment-time">May 8</div>
-                        <span class="appointment-icon"><i class="bi bi-capsule"></i></span>
-                        <div>
-                            <div class="appointment-title">Medication review</div>
-                            <div class="appointment-meta">Primary care - 12:15 PM</div>
-                        </div>
-                        <span class="status-badge status-confirmed">Confirmed</span>
-                    </div>
+                    {% endfor %}
                 </div>
             </article>
 
@@ -97,9 +103,27 @@
                     <span class="section-kicker">Health</span>
                 </div>
                 <div class="mini-grid">
-                    <div class="mini-tile"><i class="bi bi-shield-check me-2"></i>Insurance details are ready for the next appointment</div>
-                    <div class="mini-tile"><i class="bi bi-prescription2 me-2"></i>One prescription renewal can be reviewed</div>
-                    <div class="mini-tile"><i class="bi bi-chat-square-text me-2"></i>Message history is available for your care team</div>
+                    <div class="mini-tile">
+                        <i class="bi bi-person-vcard me-2"></i>
+                        Blood type:
+                        {% if patient_profile and patient_profile.blood_type %}
+                            {{ patient_profile.blood_type }}
+                        {% else %}
+                            Not added yet
+                        {% endif %}
+                    </div>
+                    <div class="mini-tile">
+                        <i class="bi bi-credit-card me-2"></i>
+                        Pending approvals or payments: {{ pending_approvals }}
+                    </div>
+                    <div class="mini-tile">
+                        <i class="bi bi-calendar-week me-2"></i>
+                        {% if last_appointment %}
+                            Last activity: {{ last_appointment.slot.date|date:"M j, Y" }}
+                        {% else %}
+                            No appointment activity yet
+                        {% endif %}
+                    </div>
                 </div>
             </article>
         </div>
@@ -114,21 +138,27 @@
                     <div class="highlight-item">
                         <div>
                             <div class="highlight-label">Next confirmed visit</div>
-                            <div class="highlight-value">10:30</div>
+                            <div class="highlight-value">
+                                {% if next_confirmed_visit %}
+                                    {{ next_confirmed_visit.slot.start_time|time:"H:i" }}
+                                {% else %}
+                                    None
+                                {% endif %}
+                            </div>
                         </div>
-                        <span class="status-badge status-confirmed">Good</span>
+                        <span class="status-badge status-confirmed">{% if next_confirmed_visit %}Ready{% else %}Open{% endif %}</span>
                     </div>
                     <div class="highlight-item">
                         <div>
                             <div class="highlight-label">Pending approvals</div>
-                            <div class="highlight-value">1</div>
+                            <div class="highlight-value">{{ pending_approvals }}</div>
                         </div>
                         <span class="status-badge status-pending">Pending</span>
                     </div>
                     <div class="highlight-item">
                         <div>
                             <div class="highlight-label">Completed visits</div>
-                            <div class="highlight-value">{{ completed_visits|default:"8" }}</div>
+                            <div class="highlight-value">{{ completed_visits }}</div>
                         </div>
                         <span class="status-badge status-live">Info</span>
                     </div>
