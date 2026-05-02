@@ -10,4 +10,5 @@ urlpatterns = [
     path('dashboard/', include('dashboard.urls')),
     path('appointments/', include('appointments.urls')),
     path('reception/', include('reception.urls')),
+    path('emr/', include('emr.urls')),
 ]
