@@ -81,6 +81,11 @@ EMAIL_HOST_PASSWORD = clean_env('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = clean_env('DEFAULT_FROM_EMAIL', 'no-reply@clinic.local')
 EMAIL_BACKEND = clean_env('EMAIL_BACKEND')
 
+# Stripe settings
+STRIPE_SECRET_KEY = clean_env('STRIPE_SECRET')
+STRIPE_PUBLIC_KEY = clean_env('STRIPE_PUBLIC')
+STRIPE_WEBHOOK_SECRET = clean_env('STRIPE_WEBHOOK_SECRET')
+
 
 TEMPLATES = [
     {
