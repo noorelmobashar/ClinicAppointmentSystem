@@ -69,6 +69,15 @@
                 <i class="bi bi-person-plus"></i>
                 <span><strong>Walk-in Registration</strong><span>Quick patient intake</span></span>
             </a>
+        {% elif request.user.role == 'ADMIN' %}
+            <a class="sidebar-link {% if current_section == 'overview' %}active{% endif %}" href="{% url 'dashboard' %}">
+                <i class="bi bi-grid-1x2"></i>
+                <span><strong>Overview & Analytics</strong><span>Admin command</span></span>
+            </a>
+            <a class="sidebar-link {% if current_section == 'admin-users' %}active{% endif %}" href="{% url 'admin-users' %}">
+                <i class="bi bi-people-fill"></i>
+                <span><strong>Users & Roles</strong><span>Access management</span></span>
+            </a>
         {% endif %}
     </nav>
 

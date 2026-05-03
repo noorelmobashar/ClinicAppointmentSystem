@@ -48,6 +48,13 @@
         --role-wash: rgba(249, 115, 22, 0.18);
     }
 
+    .dashboard-shell.role-admin {
+        --role-primary: #8b5cf6;
+        --role-secondary: #c084fc;
+        --role-accent: #f3e8ff;
+        --role-wash: rgba(139, 92, 246, 0.18);
+    }
+
     .dashboard-main {
         margin-left: 300px;
         min-height: 100vh;
@@ -318,5 +325,114 @@
         .sidebar-nav {
             grid-template-columns: 1fr;
         }
+    }
+    .walkin-form .form-label {
+        color: #475569;
+        font-size: 0.8rem;
+        font-weight: 800;
+        margin-bottom: 6px;
+    }
+
+    .walkin-input {
+        width: 100%;
+        min-height: 42px;
+        border: 1px solid #cbd5e1;
+        border-radius: 12px;
+        padding: 10px 12px;
+        color: #0f172a;
+        background: #ffffff;
+        outline: none;
+        transition: border-color 180ms ease, box-shadow 180ms ease;
+    }
+
+    input[type="date"].walkin-input {
+        appearance: auto;
+        -webkit-appearance: auto;
+        padding-inline: 14px;
+    }
+
+    .reception-filter-bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        align-items: end;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.96));
+        padding: 16px;
+        border: 1px solid rgba(203, 213, 225, 0.92);
+        border-radius: 20px;
+        box-shadow: var(--dash-shadow-soft);
+    }
+
+    .reception-filter-field {
+        display: grid;
+        gap: 8px;
+        min-width: 180px;
+        flex: 1 1 220px;
+    }
+
+    .reception-filter-label {
+        color: #475569;
+        font-size: 0.75rem;
+        font-weight: 900;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+    }
+
+    .reception-filter-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .reception-filter-button,
+    .reception-filter-clear {
+        min-height: 46px;
+        padding: 0 18px;
+        border-radius: 14px;
+        font-weight: 800;
+    }
+
+    .reception-filter-button {
+        background: linear-gradient(135deg, var(--role-primary), var(--role-secondary));
+        border-color: transparent;
+    }
+
+    .reception-filter-clear {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        color: #475569;
+        text-decoration: none;
+    }
+
+    .walkin-textarea {
+        min-height: 96px;
+        resize: vertical;
+    }
+
+    .walkin-input:focus {
+        border-color: color-mix(in srgb, var(--role-primary) 62%, white);
+        box-shadow: 0 0 0 0.22rem color-mix(in srgb, var(--role-accent) 70%, transparent);
+    }
+
+    .walkin-submit {
+        width: 100%;
+        min-height: 44px;
+        border: 1px solid transparent;
+        border-radius: 12px;
+        color: #ffffff;
+        background: linear-gradient(135deg, var(--role-primary), var(--role-secondary));
+        font-size: 0.9rem;
+        font-weight: 900;
+        transition: transform 180ms ease, box-shadow 180ms ease;
+    }
+
+    .walkin-submit:hover,
+    .walkin-submit:focus {
+        transform: translateY(-1px);
+        box-shadow: 0 10px 24px color-mix(in srgb, var(--role-primary) 32%, transparent);
     }
 </style>

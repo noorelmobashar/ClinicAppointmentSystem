@@ -18,6 +18,7 @@ urlpatterns = [
     path('reception/', include('reception.urls')),
     path('emr/', include('emr.urls')),
     path('payments/', include('payments.urls')),
+    path('admin-panel/', include('admin_panel.urls')),
     
     # path('__debug__/', include('debug_toolbar.urls')),
 ]

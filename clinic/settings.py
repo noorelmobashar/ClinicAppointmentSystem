@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     'payments',
     'notifications',
     'dashboard',
+    'admin_panel',
 ]
 
 MIDDLEWARE = [

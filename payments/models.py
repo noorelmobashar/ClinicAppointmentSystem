@@ -6,6 +6,7 @@ class PaymentTransaction(models.Model):
         PENDING = "PENDING", "Pending"
         PAID = "PAID", "Paid"
         FAILED = "FAILED", "Failed"
+        REFUNDED = "REFUNDED", "Refunded"
 
     appointment = models.OneToOneField(
         "appointments.Appointment",
