@@ -8,8 +8,8 @@ from django.urls import reverse
 from django.utils import timezone
 
 from accounts.models import DoctorProfile
-from .models import Appointment, AppointmentSlot
-from .services import create_pending_appointment
+from .models import Appointment, AppointmentCancellation, AppointmentSlot
+from .services import AppointmentCancellationNotAllowed, cancel_patient_appointment, create_pending_appointment
 
 User = get_user_model()
 
@@ -139,3 +139,80 @@ class AppointmentBookingValidationTests(TestCase):
         self.assertEqual(replacement.status, Appointment.Status.AWAITING_PAYMENT)
         self.assertEqual(overlapping.status, Appointment.Status.AWAITING_PAYMENT)
         self.assertEqual(same_doctor_replacement.status, Appointment.Status.AWAITING_PAYMENT)
+
+    def test_patient_can_cancel_requested_or_confirmed_and_reason_is_saved(self):
+        slot = self.create_slot(self.doctor_one, "16:00:00", "16:30:00")
+        appointment = Appointment.objects.create(
+            patient=self.patient_one,
+            doctor=self.doctor_one,
+            slot=slot,
+            status=Appointment.Status.CONFIRMED,
+        )
+        slot.is_booked = True
+        slot.save(update_fields=["is_booked"])
+
+        cancel_patient_appointment(
+            appointment_id=appointment.id,
+            patient=self.patient_one,
+            reason="I can no longer attend.",
+        )
+
+        appointment.refresh_from_db()
+        slot.refresh_from_db()
+        cancellation = AppointmentCancellation.objects.get(appointment=appointment)
+
+        self.assertEqual(appointment.status, Appointment.Status.CANCELLED)
+        self.assertFalse(slot.is_booked)
+        self.assertEqual(cancellation.previous_status, Appointment.Status.CONFIRMED)
+        self.assertEqual(cancellation.reason, "I can no longer attend.")
+        self.assertEqual(cancellation.cancelled_by, self.patient_one)
+
+    def test_patient_cannot_cancel_awaiting_payment_or_completed(self):
+        slots_by_status = {
+            Appointment.Status.AWAITING_PAYMENT: self.create_slot(self.doctor_one, "17:00:00", "17:30:00"),
+            Appointment.Status.COMPLETED: self.create_slot(self.doctor_one, "18:00:00", "18:30:00"),
+        }
+        for status, slot in slots_by_status.items():
+            with self.subTest(status=status):
+                appointment = Appointment.objects.create(
+                    patient=self.patient_one,
+                    doctor=self.doctor_one,
+                    slot=slot,
+                    status=status,
+                )
+
+                with self.assertRaisesMessage(
+                    AppointmentCancellationNotAllowed,
+                    "You can cancel only requested or confirmed appointments.",
+                ):
+                    cancel_patient_appointment(
+                        appointment_id=appointment.id,
+                        patient=self.patient_one,
+                        reason="Cannot attend.",
+                    )
+
+                appointment.refresh_from_db()
+                self.assertEqual(appointment.status, status)
+                self.assertFalse(AppointmentCancellation.objects.filter(appointment=appointment).exists())
+
+    def test_cancel_view_requires_reason_and_owns_appointment(self):
+        slot = self.create_slot(self.doctor_one, "19:00:00", "19:30:00")
+        appointment = Appointment.objects.create(
+            patient=self.patient_one,
+            doctor=self.doctor_one,
+            slot=slot,
+            status=Appointment.Status.REQUESTED,
+        )
+
+        self.client.force_login(self.patient_one)
+        response = self.client.post(reverse("cancel-appointment", args=[appointment.id]), {"reason": ""})
+        self.assertRedirects(response, reverse("my-appointments"))
+        appointment.refresh_from_db()
+        self.assertEqual(appointment.status, Appointment.Status.REQUESTED)
+
+        self.client.force_login(self.patient_two)
+        response = self.client.post(
+            reverse("cancel-appointment", args=[appointment.id]),
+            {"reason": "Not my appointment."},
+        )
+        self.assertEqual(response.status_code, 404)

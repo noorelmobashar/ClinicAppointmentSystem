@@ -301,6 +301,43 @@
         transform: translateY(-1px);
     }
 
+    .cancel-form {
+        display: grid;
+        gap: 0.45rem;
+        width: min(18rem, 100%);
+    }
+
+    .cancel-reason {
+        width: 100%;
+        padding: 0.7rem 0.85rem;
+        border: 1px solid rgba(248, 113, 113, 0.24);
+        border-radius: 16px;
+        resize: vertical;
+        font-size: 0.85rem;
+        color: var(--clinic-text);
+        background: #fff;
+    }
+
+    .cancel-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 2rem;
+        padding: 0.35rem 1rem;
+        border: 0;
+        border-radius: 999px;
+        background: linear-gradient(135deg, #b91c1c, #ef4444);
+        color: #fff;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        box-shadow: 0 4px 12px rgba(185, 28, 28, 0.2);
+    }
+
+    .cancel-btn:hover {
+        background: linear-gradient(135deg, #991b1b, #dc2626);
+    }
+
     .pay-now-btn:hover {
         background: linear-gradient(135deg, #1e40af, #0e7490);
         color: #fff;
@@ -389,6 +426,20 @@
                                             <a href="{% url 'stripe-checkout' appointment.id %}" class="pay-now-btn">
                                                 <i class="bi bi-credit-card me-1"></i>Pay Now
                                             </a>
+                                        {% elif appointment.status == "REQUESTED" or appointment.status == "CONFIRMED" %}
+                                            <form method="post" action="{% url 'cancel-appointment' appointment.id %}" class="cancel-form">
+                                                {% csrf_token %}
+                                                <textarea
+                                                    name="reason"
+                                                    class="cancel-reason"
+                                                    rows="2"
+                                                    placeholder="Why are you cancelling?"
+                                                    required
+                                                ></textarea>
+                                                <button type="submit" class="cancel-btn">
+                                                    <i class="bi bi-x-circle me-1"></i>Cancel Appointment
+                                                </button>
+                                            </form>
                                         {% elif appointment.consultation %}
                                             <a href="{% url 'emr:patient-consultation-summary' appointment.id %}" class="summary-btn">
                                                 <i class="bi bi-file-earmark-medical me-1"></i>View Summary

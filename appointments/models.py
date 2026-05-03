@@ -246,3 +246,26 @@ class RescheduleHistory(models.Model):
 
     def __str__(self):
         return f"Reschedule for {self.appointment.id} at {self.created_at}"
+
+
+class AppointmentCancellation(models.Model):
+    appointment = models.ForeignKey(
+        Appointment,
+        on_delete=models.CASCADE,
+        related_name="cancellation_history",
+    )
+    cancelled_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="appointment_cancellations",
+    )
+    previous_status = models.CharField(
+        max_length=20,
+        choices=Appointment.Status.choices,
+    )
+    reason = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Cancellation for {self.appointment_id} at {self.created_at}"

@@ -1,13 +1,19 @@
+from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.http import HttpResponse, JsonResponse
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.timezone import now
 
+from .forms import AppointmentCancellationForm
 from .models import Appointment, AppointmentSlot
-from .services import create_pending_appointment
+from .services import (
+    AppointmentCancellationNotAllowed,
+    cancel_patient_appointment,
+    create_pending_appointment,
+)
 
 
 @login_required
@@ -154,7 +160,34 @@ def patient_history(request):
     return render(request, "patients/my_appointments.html", {
         "upcoming": upcoming,
         "history": history,
+        "cancellation_form": AppointmentCancellationForm(),
         "current_section": "appointments",
         "dashboard_title": "My appointments",
         "dashboard_subtitle": "Review upcoming visits, booking history, and the current status of each appointment.",
     })
+
+
+@login_required
+def cancel_appointment(request, appointment_id):
+    if request.method != "POST":
+        return HttpResponse("Method not allowed", status=405)
+
+    form = AppointmentCancellationForm(request.POST)
+    if not form.is_valid():
+        messages.error(request, "Please provide a cancellation reason.")
+        return redirect("my-appointments")
+
+    try:
+        cancel_patient_appointment(
+            appointment_id=appointment_id,
+            patient=request.user,
+            reason=form.cleaned_data["reason"],
+        )
+    except Appointment.DoesNotExist:
+        return HttpResponse("Not found", status=404)
+    except AppointmentCancellationNotAllowed as exc:
+        messages.error(request, exc.messages[0])
+        return redirect("my-appointments")
+
+    messages.success(request, "Your appointment has been cancelled.")
+    return redirect("my-appointments")

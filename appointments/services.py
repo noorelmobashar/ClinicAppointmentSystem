@@ -5,7 +5,16 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 
-from .models import Appointment, AppointmentSlot, DoctorSchedule
+from .models import (
+    Appointment,
+    AppointmentCancellation,
+    AppointmentSlot,
+    DoctorSchedule,
+)
+
+
+class AppointmentCancellationNotAllowed(ValidationError):
+    pass
 
 
 def generate_slots(schedule, date):
@@ -130,5 +139,39 @@ def create_pending_appointment(*, patient, slot_id):
             raise ValidationError(
                 "You already have another active appointment that overlaps with this time."
             ) from exc
+
+    return appointment
+
+
+def cancel_patient_appointment(*, appointment_id, patient, reason):
+    with transaction.atomic():
+        appointment = (
+            Appointment.objects.select_for_update()
+            .select_related("slot")
+            .get(pk=appointment_id, patient=patient)
+        )
+        slot = AppointmentSlot.objects.select_for_update().get(pk=appointment.slot_id)
+
+        if appointment.status not in {
+            Appointment.Status.REQUESTED,
+            Appointment.Status.CONFIRMED,
+        }:
+            raise AppointmentCancellationNotAllowed(
+                "You can cancel only requested or confirmed appointments."
+            )
+
+        AppointmentCancellation.objects.create(
+            appointment=appointment,
+            cancelled_by=patient,
+            previous_status=appointment.status,
+            reason=reason,
+        )
+
+        appointment.status = Appointment.Status.CANCELLED
+        appointment.save(update_fields=["status"])
+
+        if not Appointment.objects.active().filter(slot_id=slot.id).exists():
+            slot.is_booked = False
+            slot.save(update_fields=["is_booked"])
 
     return appointment
