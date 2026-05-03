@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}Consultation Summary | Clinic System{% endblock %}
+
+{% block extra_css %}
+{% include "dashboard/partials/_dashboard_styles.html" %}
+<style>
+    .summary-shell {
+        display: grid;
+        gap: 1.5rem;
+        padding-bottom: 2rem;
+    }
+
+    .summary-hero,
+    .summary-card {
+        padding: 1.6rem;
+        border-radius: 26px;
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        background: rgba(255, 255, 255, 0.95);
+        box-shadow: 0 20px 46px rgba(15, 23, 42, 0.08);
+    }
+
+    .summary-hero {
+        color: #fff;
+        background:
+            radial-gradient(circle at top right, rgba(255, 255, 255, 0.16), transparent 16rem),
+            linear-gradient(135deg, #0f766e, #0891b2 54%, #1d4ed8);
+    }
+
+    .summary-hero h1 {
+        margin: 0.9rem 0 0.6rem;
+        font-size: clamp(2rem, 4vw, 3rem);
+        font-weight: 900;
+    }
+
+    .summary-hero p,
+    .summary-hero .hero-meta {
+        color: rgba(255, 255, 255, 0.84);
+    }
+
+    .hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        min-height: 2rem;
+        padding: 0 0.85rem;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.14);
+        font-size: 0.74rem;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+    }
+
+    .hero-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem 1.2rem;
+        margin-top: 1rem;
+    }
+
+    .summary-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.4fr) minmax(18rem, 1fr);
+        gap: 1.5rem;
+        align-items: start;
+    }
+
+    .summary-stack {
+        display: grid;
+        gap: 1.5rem;
+    }
+
+    .section-kicker {
+        display: inline-flex;
+        align-items: center;
+        min-height: 2rem;
+        padding: 0 0.85rem;
+        border-radius: 999px;
+        background: #dbeafe;
+        color: var(--clinic-primary-strong);
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+    }
+
+    .summary-card h2 {
+        margin: 0.8rem 0 0.45rem;
+        font-size: 1.2rem;
+        font-weight: 800;
+    }
+
+    .summary-text {
+        color: var(--clinic-muted);
+        line-height: 1.75;
+    }
+
+    .summary-text p:last-child {
+        margin-bottom: 0;
+    }
+
+    .prescription-list {
+        display: grid;
+        gap: 0.9rem;
+        margin-top: 1rem;
+    }
+
+    .prescription-item {
+        padding: 1rem;
+        border-radius: 20px;
+        border: 1px solid rgba(148, 163, 184, 0.18);
+        background: linear-gradient(180deg, rgba(248, 250, 252, 0.85), #fff);
+    }
+
+    .prescription-item strong {
+        display: block;
+        margin-bottom: 0.45rem;
+        color: var(--clinic-text);
+    }
+
+    .prescription-meta {
+        display: grid;
+        gap: 0.35rem;
+        color: var(--clinic-muted);
+    }
+
+    .summary-note {
+        color: var(--clinic-muted);
+        line-height: 1.65;
+    }
+
+    @media (max-width: 991.98px) {
+        .summary-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-shell">
+    {% include "dashboard/partials/_sidebar.html" %}
+    <div class="dashboard-main">
+        {% include "dashboard/partials/_topbar.html" %}
+
+        <section class="summary-shell">
+            <section class="summary-hero">
+                <span class="hero-badge"><i class="bi bi-file-earmark-medical"></i> Consultation Summary</span>
+                <h1>Review your visit summary.</h1>
+                <p>This page is read-only. It shows the diagnosis and prescriptions recorded during your consultation.</p>
+                <div class="hero-meta">
+                    <span><i class="bi bi-person-badge me-1"></i>Dr. {{ consultation.doctor.get_full_name|default:consultation.doctor.username }}</span>
+                    <span><i class="bi bi-calendar3 me-1"></i>{{ appointment.slot.date|date:"M j, Y" }}</span>
+                    <span><i class="bi bi-clock me-1"></i>{{ appointment.slot.start_time|time:"H:i" }} - {{ appointment.slot.end_time|time:"H:i" }}</span>
+                </div>
+            </section>
+
+            <div class="summary-grid">
+                <div class="summary-stack">
+                    <section class="summary-card">
+                        <span class="section-kicker">Symptoms</span>
+                        <h2>Consultation notes</h2>
+                        <div class="summary-text">
+                            {{ consultation.symptoms_notes|default:"No symptoms notes were recorded for this consultation."|linebreaks }}
+                        </div>
+                    </section>
+
+                    <section class="summary-card">
+                        <span class="section-kicker">Diagnosis</span>
+                        <h2>Doctor assessment</h2>
+                        <div class="summary-text">
+                            {{ consultation.diagnosis|default:"No diagnosis details were recorded for this consultation."|linebreaks }}
+                        </div>
+                    </section>
+                </div>
+
+                <aside class="summary-stack">
+                    <section class="summary-card">
+                        <span class="section-kicker">Prescription</span>
+                        <h2>Medications</h2>
+                        {% if consultation.prescriptions.all %}
+                            <div class="prescription-list">
+                                {% for prescription in consultation.prescriptions.all %}
+                                    <div class="prescription-item">
+                                        <strong>{{ prescription.medication_name }}</strong>
+                                        <div class="prescription-meta">
+                                            <span><i class="bi bi-capsule me-1"></i>Dosage: {{ prescription.dosage }}</span>
+                                            <span><i class="bi bi-hourglass-split me-1"></i>Duration: {{ prescription.duration }}</span>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="summary-note mb-0">No prescriptions were recorded for this consultation.</p>
+                        {% endif %}
+                    </section>
+
+                    <section class="summary-card">
+                        <span class="section-kicker">Access</span>
+                        <h2>Read-only record</h2>
+                        <p class="summary-note mb-0">Patients can review this summary but cannot edit the consultation record.</p>
+                    </section>
+                </aside>
+            </div>
+        </section>
+    </div>
+</div>
+{% endblock %}

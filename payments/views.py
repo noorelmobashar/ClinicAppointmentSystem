@@ -6,6 +6,7 @@ import stripe
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
@@ -22,18 +23,31 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 @login_required
 def CreateCheckoutSessionView(request, appointment_id):
     appointment = get_object_or_404(
-        Appointment,
+        Appointment.objects.select_related("slot", "doctor", "doctor__doctor_profile"),
         id=appointment_id,
         patient=request.user,
         status=Appointment.Status.AWAITING_PAYMENT,
     )
-    
+
+    try:
+        with transaction.atomic():
+            appointment = (
+                Appointment.objects.select_for_update()
+                .select_related("slot", "doctor", "doctor__doctor_profile")
+                .get(pk=appointment.pk)
+            )
+            slot = AppointmentSlot.objects.select_for_update().get(pk=appointment.slot_id)
+
+            if slot.is_booked:
+                raise ValidationError("The session is already booked by another user.")
+
+            appointment.full_clean()
+    except ValidationError as exc:
+        messages.error(request, exc.messages[0])
+        return redirect("patient-booking")
+
     slot = appointment.slot
     consultation_fee = getattr(getattr(appointment.doctor, "doctor_profile", None), "consultation_fee", Decimal("0.00"))
-
-    if slot.is_booked:
-        messages.error(request, "The session is already booked by another user.")
-        return redirect("patient-booking")
 
     if consultation_fee <= 0:
         messages.error(request, "This doctor does not have a valid consultation fee.")
@@ -149,12 +163,15 @@ def StripeWebhookView(request):
                 txn.status = PaymentTransaction.Status.PAID
                 txn.paid_at = now()
                 txn.save(update_fields=["stripe_checkout_id", "status", "paid_at"])
-                
-            # Cancel all OTHER awaiting appointments for this slot
-            Appointment.objects.filter(
-                slot=slot,
-                status=Appointment.Status.AWAITING_PAYMENT
-            ).exclude(id=appointment.id).update(status=Appointment.Status.CANCELLED)
+
+            # Legacy cleanup for any rows that predate the uniqueness guard.
+            for other_appointment in (
+                Appointment.objects.select_for_update()
+                .filter(slot=slot, status=Appointment.Status.AWAITING_PAYMENT)
+                .exclude(id=appointment.id)
+            ):
+                other_appointment.status = Appointment.Status.CANCELLED
+                other_appointment.save(update_fields=["status", "active_slot"])
 
     elif event.type in ["checkout.session.expired", "checkout.session.async_payment_failed"]:
         session = event.data.object
@@ -163,7 +180,7 @@ def StripeWebhookView(request):
         if appointment_id:
             with transaction.atomic():
                 try:
-                    appointment = Appointment.objects.get(id=appointment_id)
+                    appointment = Appointment.objects.select_for_update().get(id=appointment_id)
                     appointment.status = Appointment.Status.CANCELLED
                     appointment.save(update_fields=["status"])
                     
@@ -187,20 +204,21 @@ def PaymentSuccessView(request):
 @login_required
 def PaymentCancelView(request, appointment_id=None):
     if appointment_id:
-        try:
-            appointment = Appointment.objects.get(
-                id=appointment_id,
-                patient=request.user,
-                status=Appointment.Status.AWAITING_PAYMENT,
-            )
-            appointment.status = Appointment.Status.CANCELLED
-            appointment.save(update_fields=["status"])
-            PaymentTransaction.objects.filter(
-                appointment=appointment,
-                status=PaymentTransaction.Status.PENDING,
-            ).update(status=PaymentTransaction.Status.FAILED)
-        except Appointment.DoesNotExist:
-            pass
+        with transaction.atomic():
+            try:
+                appointment = Appointment.objects.select_for_update().get(
+                    id=appointment_id,
+                    patient=request.user,
+                    status=Appointment.Status.AWAITING_PAYMENT,
+                )
+                appointment.status = Appointment.Status.CANCELLED
+                appointment.save(update_fields=["status"])
+                PaymentTransaction.objects.filter(
+                    appointment=appointment,
+                    status=PaymentTransaction.Status.PENDING,
+                ).update(status=PaymentTransaction.Status.FAILED)
+            except Appointment.DoesNotExist:
+                pass
 
     return render(request, "payments/cancel.html", {
         "dashboard_title": "Payment Cancelled",

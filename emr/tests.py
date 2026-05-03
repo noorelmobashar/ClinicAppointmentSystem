@@ -30,6 +30,12 @@ class ConsultationWorkflowTests(TestCase):
             password="pass12345",
             role="PATIENT",
         )
+        self.other_patient = User.objects.create_user(
+            username="other-patient",
+            email="other-patient@example.com",
+            password="pass12345",
+            role="PATIENT",
+        )
         self.client.force_login(self.doctor)
         self.slot_count = 0
 
@@ -51,6 +57,9 @@ class ConsultationWorkflowTests(TestCase):
 
     def consultation_url(self, appointment):
         return reverse("emr:consultation-create", args=[appointment.id])
+
+    def patient_summary_url(self, appointment):
+        return reverse("emr:patient-consultation-summary", args=[appointment.id])
 
     def post_data(self, prescriptions=None, consultation=None):
         if prescriptions is None:
@@ -179,3 +188,57 @@ class ConsultationWorkflowTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Please submit at least 1 form.")
         self.assertFalse(Consultation.objects.filter(appointment=appointment).exists())
+
+    def test_patient_can_view_read_only_consultation_summary(self):
+        appointment = self.create_appointment(status=Appointment.Status.COMPLETED)
+        consultation = Consultation.objects.create(
+            appointment=appointment,
+            doctor=self.doctor,
+            patient=self.patient,
+            symptoms_notes="Patient had fever for three days.",
+            diagnosis="Viral infection",
+        )
+        Prescription.objects.create(
+            consultation=consultation,
+            medication_name="Paracetamol",
+            dosage="500 mg",
+            duration="3 days",
+        )
+
+        self.client.force_login(self.patient)
+        response = self.client.get(self.patient_summary_url(appointment))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Viral infection")
+        self.assertContains(response, "Paracetamol")
+        self.assertNotContains(response, "<form", html=False)
+
+    def test_other_patient_cannot_view_consultation_summary(self):
+        appointment = self.create_appointment(status=Appointment.Status.COMPLETED)
+        Consultation.objects.create(
+            appointment=appointment,
+            doctor=self.doctor,
+            patient=self.patient,
+            symptoms_notes="Private notes",
+            diagnosis="Private diagnosis",
+        )
+
+        self.client.force_login(self.other_patient)
+        response = self.client.get(self.patient_summary_url(appointment))
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_doctor_cannot_use_patient_summary_view(self):
+        appointment = self.create_appointment(status=Appointment.Status.COMPLETED)
+        Consultation.objects.create(
+            appointment=appointment,
+            doctor=self.doctor,
+            patient=self.patient,
+            symptoms_notes="Notes",
+            diagnosis="Diagnosis",
+        )
+
+        self.client.force_login(self.doctor)
+        response = self.client.get(self.patient_summary_url(appointment))
+
+        self.assertEqual(response.status_code, 403)

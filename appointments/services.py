@@ -1,8 +1,11 @@
 from datetime import datetime, timedelta
 
+from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
+from django.db import IntegrityError, transaction
 from django.utils import timezone
 
-from .models import AppointmentSlot, DoctorSchedule
+from .models import Appointment, AppointmentSlot, DoctorSchedule
 
 
 def generate_slots(schedule, date):
@@ -11,7 +14,7 @@ def generate_slots(schedule, date):
 
     duration = timedelta(minutes=schedule.slot_duration_minutes)
 
-    buffer = timedelta(minutes=5)  
+    buffer = timedelta(minutes=5)
 
     current = start
 
@@ -71,3 +74,61 @@ def sync_schedule_slots(schedule, days_ahead=30):
         weekday=schedule.day_of_week,
         days_ahead=days_ahead,
     )
+
+
+def create_pending_appointment(*, patient, slot_id):
+    """
+    Create one pending appointment while preventing:
+    - duplicate active bookings for the same slot
+    - overlapping active appointments for the same patient
+
+    The patient row and slot row are locked so concurrent booking attempts are
+    serialized at the database level.
+    """
+    User = get_user_model()
+
+    with transaction.atomic():
+        User.objects.select_for_update().get(pk=patient.pk)
+        slot = (
+            AppointmentSlot.objects.select_for_update()
+            .select_related("doctor")
+            .get(pk=slot_id)
+        )
+
+        slot_datetime = timezone.make_aware(
+            datetime.combine(slot.date, slot.start_time),
+            timezone.get_current_timezone(),
+        )
+        if slot_datetime <= timezone.now():
+            raise ValidationError("This time slot has already passed.")
+
+        if slot.is_booked:
+            raise ValidationError("The session is already booked by another user.")
+
+        appointment = Appointment(
+            patient=patient,
+            doctor=slot.doctor,
+            slot=slot,
+            status=Appointment.Status.AWAITING_PAYMENT,
+        )
+
+        try:
+            appointment.save()
+        except IntegrityError as exc:
+            if Appointment.objects.active().filter(slot_id=slot.id).exists():
+                raise ValidationError(
+                    "This time slot is already booked for this doctor."
+                ) from exc
+            if Appointment.objects.active().filter(
+                patient_id=patient.pk,
+                doctor_id=slot.doctor_id,
+                slot__date=slot.date,
+            ).exists():
+                raise ValidationError(
+                    "You already have an active appointment with this doctor on this day."
+                ) from exc
+            raise ValidationError(
+                "You already have another active appointment that overlaps with this time."
+            ) from exc
+
+    return appointment

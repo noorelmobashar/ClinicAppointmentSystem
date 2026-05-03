@@ -90,7 +90,7 @@
                                 <div class="appointment-time">{{ appt.slot.start_time|time:"H:i" }}</div>
                                 <span class="appointment-icon"><i class="bi bi-person-check"></i></span>
                                 <div>
-                                    <div class="appointment-title">{{ appt.display_patient_name }}</div>
+                                    <div class="queue-fee">EGP {{ appt.doctor.doctor_profile.consultation_fee|default_if_none:0|floatformat:2 }}</div>
                                     <div class="appointment-meta">Dr. {{ appt.slot.doctor.first_name }} {{ appt.slot.doctor.last_name }}</div>
                                 </div>
                                 <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">

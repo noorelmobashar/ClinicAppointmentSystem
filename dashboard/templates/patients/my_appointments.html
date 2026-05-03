@@ -277,6 +277,30 @@
         box-shadow: 0 4px 12px rgba(29, 78, 216, 0.25);
     }
 
+    .summary-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 2rem;
+        padding: 0.35rem 1rem;
+        border-radius: 999px;
+        border: 1px solid rgba(8, 145, 178, 0.24);
+        background: #ecfeff;
+        color: #0f766e;
+        font-size: 0.78rem;
+        font-weight: 700;
+        text-decoration: none;
+        letter-spacing: 0.04em;
+        transition: all 0.2s ease;
+    }
+
+    .summary-btn:hover {
+        color: #115e59;
+        border-color: rgba(15, 118, 110, 0.35);
+        background: #cffafe;
+        transform: translateY(-1px);
+    }
+
     .pay-now-btn:hover {
         background: linear-gradient(135deg, #1e40af, #0e7490);
         color: #fff;
@@ -365,6 +389,10 @@
                                             <a href="{% url 'stripe-checkout' appointment.id %}" class="pay-now-btn">
                                                 <i class="bi bi-credit-card me-1"></i>Pay Now
                                             </a>
+                                        {% elif appointment.consultation %}
+                                            <a href="{% url 'emr:patient-consultation-summary' appointment.id %}" class="summary-btn">
+                                                <i class="bi bi-file-earmark-medical me-1"></i>View Summary
+                                            </a>
                                         {% endif %}
                                     </div>
                                 </article>
@@ -401,7 +429,14 @@
                                             <span><i class="bi bi-check2-square"></i>{{ appointment.get_status_display }}</span>
                                         </div>
                                     </div>
-                                    <span class="status-pill status-{{ appointment.status }}">{{ appointment.get_status_display }}</span>
+                                    <div style="display:flex; flex-direction:column; align-items:flex-end; gap:0.5rem;">
+                                        <span class="status-pill status-{{ appointment.status }}">{{ appointment.get_status_display }}</span>
+                                        {% if appointment.consultation %}
+                                            <a href="{% url 'emr:patient-consultation-summary' appointment.id %}" class="summary-btn">
+                                                <i class="bi bi-file-earmark-medical me-1"></i>View Summary
+                                            </a>
+                                        {% endif %}
+                                    </div>
                                 </article>
                             {% empty %}
                                 <div class="empty-card">

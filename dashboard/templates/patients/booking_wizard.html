@@ -436,7 +436,7 @@
                                         data-doctor-id="{{ doctor.id }}"
                                         data-doctor-name="Dr. {{ doctor.get_full_name|default:doctor.username }}"
                                         data-doctor-specialty="{{ doctor.doctor_profile.specialty|default:'Not specified' }}"
-                                        data-doctor-fee="${{ doctor.doctor_profile.consultation_fee|default_if_none:0|floatformat:2 }}"
+                                        data-doctor-fee="EGP {{ doctor.doctor_profile.consultation_fee|default_if_none:0|floatformat:2 }}"
                                     >
                                         <div class="doctor-top">
                                             <div>
@@ -445,7 +445,7 @@
                                             </div>
                                             <div class="doctor-price">
                                                 <div class="doctor-meta-label">Visit Price</div>
-                                                <div class="doctor-meta-value">${{ doctor.doctor_profile.consultation_fee|default_if_none:0|floatformat:2 }}</div>
+                                                <div class="doctor-meta-value">EGP {{ doctor.doctor_profile.consultation_fee|default_if_none:0|floatformat:2 }}</div>
                                             </div>
                                         </div>
 
@@ -618,7 +618,7 @@
                 const slots = Array.isArray(data.slots) ? data.slots : [];
 
                 if (data.consultation_fee) {
-                    summaryFee.textContent = `$${Number(data.consultation_fee).toFixed(2)}`;
+                    summaryFee.textContent = `EGP ${Number(data.consultation_fee).toFixed(2)}`;
                 }
 
                 if (slots.length === 0) {

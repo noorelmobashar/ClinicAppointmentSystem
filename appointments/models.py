@@ -1,5 +1,15 @@
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import Q
+
+
+INACTIVE_APPOINTMENT_STATUSES = ("CANCELLED", "COMPLETED")
+
+
+class AppointmentQuerySet(models.QuerySet):
+    def active(self):
+        return self.exclude(status__in=INACTIVE_APPOINTMENT_STATUSES)
 
 
 class DoctorSchedule(models.Model):
@@ -85,6 +95,104 @@ class Appointment(models.Model):
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
+    active_slot = models.ForeignKey(
+        AppointmentSlot,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        editable=False,
+        related_name="active_appointments_guard",
+    )
+    active_patient_doctor_day = models.CharField(
+        max_length=128,
+        null=True,
+        blank=True,
+        editable=False,
+    )
+
+    objects = AppointmentQuerySet.as_manager()
+
+    INACTIVE_STATUSES = INACTIVE_APPOINTMENT_STATUSES
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["active_slot"],
+                name="uniq_active_appointment_per_slot",
+            ),
+            models.UniqueConstraint(
+                fields=["active_patient_doctor_day"],
+                name="uniq_active_patient_doctor_day",
+            ),
+        ]
+
+    @classmethod
+    def is_active_status(cls, status):
+        return status not in cls.INACTIVE_STATUSES
+
+    def clean(self):
+        super().clean()
+
+        if not self.slot_id or not self.patient_id:
+            return
+
+        if self.doctor_id and self.doctor_id != self.slot.doctor_id:
+            raise ValidationError({
+                "doctor": "The selected doctor must match the selected appointment slot.",
+            })
+
+        if not self.is_active_status(self.status):
+            return
+
+        conflicts = Appointment.objects.active()
+        if self.pk:
+            conflicts = conflicts.exclude(pk=self.pk)
+
+        if conflicts.filter(slot_id=self.slot_id).exists():
+            raise ValidationError(
+                "This time slot is already booked for this doctor."
+            )
+
+        if conflicts.filter(
+            patient_id=self.patient_id,
+            doctor_id=self.slot.doctor_id,
+            slot__date=self.slot.date,
+        ).exists():
+            raise ValidationError(
+                "You already have an active appointment with this doctor on this day."
+            )
+
+        overlapping = conflicts.filter(
+            patient_id=self.patient_id,
+            slot__date=self.slot.date,
+        ).filter(
+            Q(slot__start_time__lt=self.slot.end_time)
+            & Q(slot__end_time__gt=self.slot.start_time)
+        )
+
+        if overlapping.exists():
+            raise ValidationError(
+                "You already have another active appointment that overlaps with this time."
+            )
+
+    def save(self, *args, **kwargs):
+        if self.slot_id:
+            self.doctor_id = self.slot.doctor_id
+
+        self.active_slot_id = self.slot_id if self.is_active_status(self.status) else None
+        if self.slot_id and self.patient_id and self.is_active_status(self.status):
+            self.active_patient_doctor_day = (
+                f"{self.patient_id}:{self.slot.doctor_id}:{self.slot.date.isoformat()}"
+            )
+        else:
+            self.active_patient_doctor_day = None
+        update_fields = kwargs.get("update_fields")
+        if update_fields is not None:
+            update_fields = set(update_fields)
+            update_fields.update({"doctor", "active_slot", "active_patient_doctor_day"})
+            kwargs["update_fields"] = list(update_fields)
+        self.full_clean()
+        return super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.patient} - {self.slot}"

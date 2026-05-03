@@ -21,6 +21,13 @@ class DoctorRequiredMixin(LoginRequiredMixin):
         return super().dispatch(request, *args, **kwargs)
 
 
+class PatientRequiredMixin(LoginRequiredMixin):
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.role != "PATIENT":
+            raise PermissionDenied
+        return super().dispatch(request, *args, **kwargs)
+
+
 class DoctorDailyQueueView(DoctorRequiredMixin, ListView):
     """Show weekly appointments for the doctor."""
     template_name = "emr/daily_queue.html"
@@ -186,3 +193,26 @@ class ConsultationListView(DoctorRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         context["current_section"] = "consultations"
         return context
+
+
+class PatientConsultationSummaryView(PatientRequiredMixin, View):
+    template_name = "emr/patient_consultation_summary.html"
+
+    def get(self, request, *args, **kwargs):
+        consultation = get_object_or_404(
+            Consultation.objects.select_related(
+                "appointment__slot",
+                "doctor",
+                "patient",
+            ).prefetch_related("prescriptions"),
+            appointment_id=kwargs["appointment_id"],
+            patient=request.user,
+        )
+
+        return render(request, self.template_name, {
+            "consultation": consultation,
+            "appointment": consultation.appointment,
+            "current_section": "appointments",
+            "dashboard_title": "Consultation Summary",
+            "dashboard_subtitle": "Review the diagnosis and prescriptions from your completed visit.",
+        })

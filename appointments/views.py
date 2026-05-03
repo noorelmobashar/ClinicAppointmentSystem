@@ -1,11 +1,13 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.utils.timezone import now
 
 from .models import Appointment, AppointmentSlot
+from .services import create_pending_appointment
 
 
 @login_required
@@ -24,9 +26,9 @@ def available_slots(request):
         doctor_id=doctor_id,
         date=date,
         is_booked=False,
+        active_appointments_guard__isnull=True,
     ).order_by("start_time")
 
-    # If querying today's slots, exclude ones that have already passed
     current = now()
     if date == current.date().isoformat():
         slots = slots.filter(start_time__gt=current.time())
@@ -99,6 +101,7 @@ def doctor_profile_detail(request, doctor_id):
     upcoming_slots = AppointmentSlot.objects.filter(
         doctor=doctor,
         is_booked=False,
+        active_appointments_guard__isnull=True,
         date__gte=now().date(),
     ).order_by("date", "start_time")[:6]
 
@@ -117,35 +120,19 @@ def book_appointment(request, slot_id):
     if request.method != "POST":
         return HttpResponse("Method not allowed", status=405)
 
-    slot = AppointmentSlot.objects.get(id=slot_id)
+    try:
+        appointment = create_pending_appointment(patient=request.user, slot_id=slot_id)
+    except AppointmentSlot.DoesNotExist:
+        return JsonResponse({"error": "The selected appointment slot was not found."}, status=404)
+    except ValidationError as exc:
+        return JsonResponse({"error": exc.messages[0]}, status=400)
 
-    if slot.is_booked:
-        return JsonResponse({"error": "The session is already booked by another user."}, status=400)
-
-    # Reject if the slot date/time has already passed
-    from datetime import datetime, timezone as dt_tz
-    slot_dt = datetime.combine(slot.date, slot.start_time, tzinfo=dt_tz.utc)
-    if slot_dt <= now():
-        return JsonResponse({"error": "This time slot has already passed."}, status=400)
-
-    exists = Appointment.objects.filter(
-        patient=request.user,
-        slot__date=slot.date,
-        slot__start_time=slot.start_time,
-    ).exists()
-
-    if exists:
-        return JsonResponse({"error": "You already booked this time"}, status=400)
-
-    appointment = Appointment.objects.create(
-        patient=request.user,
-        doctor=slot.doctor,
-        slot=slot,
-        status=Appointment.Status.AWAITING_PAYMENT,
+    consultation_fee = getattr(
+        getattr(appointment.doctor, "doctor_profile", None),
+        "consultation_fee",
+        0,
     )
-    consultation_fee = getattr(getattr(slot.doctor, "doctor_profile", None), "consultation_fee", 0)
 
-    # Do not mark slot.is_booked = True yet!
     return JsonResponse({
         "redirect": f"/payments/checkout/{appointment.id}/",
         "consultation_fee": str(consultation_fee),
@@ -157,12 +144,12 @@ def patient_history(request):
     upcoming = Appointment.objects.filter(
         patient=request.user,
         slot__date__gte=now().date(),
-    ).select_related("doctor", "slot").order_by("slot__date", "slot__start_time")
+    ).select_related("doctor", "slot", "consultation").order_by("slot__date", "slot__start_time")
 
     history = Appointment.objects.filter(
         patient=request.user,
         slot__date__lt=now().date(),
-    ).select_related("doctor", "slot").order_by("-slot__date", "-slot__start_time")
+    ).select_related("doctor", "slot", "consultation").order_by("-slot__date", "-slot__start_time")
 
     return render(request, "patients/my_appointments.html", {
         "upcoming": upcoming,
