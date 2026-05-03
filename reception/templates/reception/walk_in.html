@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Walk-in Registration{% endblock %}
+
+{% block extra_css %}
+    {% include "dashboard/partials/_dashboard_styles.html" %}
+    <style>
+    .form-card { border: 1px solid var(--dash-border); border-radius: 12px; background: #fff; padding: 18px; }
+    .form-group { margin-bottom: 14px; }
+    .form-group label { display:block; margin-bottom:8px; font-weight:700 }
+    .walkin-input { width:100%; padding:10px 12px; border-radius:10px; border:1px solid var(--dash-border); }
+    .form-actions { margin-top: 16px; display:flex; gap:12px }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-shell role-receptionist">
+    {% include "dashboard/partials/_sidebar.html" %}
+    <main class="dashboard-main">
+        <div class="dashboard-content">
+            <div style="margin-bottom:20px;">
+                <h1 style="margin:0; font-size:1.6rem; font-weight:900">Walk-in Registration</h1>
+                <p style="margin:6px 0 0; color:var(--dash-muted)">Quickly register a walk-in patient and create a checked-in appointment.</p>
+            </div>
+
+            <form method="post" novalidate>
+                {% csrf_token %}
+                <div class="form-card">
+                    <div class="form-group">
+                        <label for="id_name">Full name</label>
+                        {{ form.name }}
+                        {% for error in form.name.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+                    </div>
+                    <div class="form-group">
+                        <label for="id_phone_number">Phone number</label>
+                        {{ form.phone_number }}
+                        {% for error in form.phone_number.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+                    </div>
+                    <div class="form-group">
+                        <label for="id_doctor">Doctor</label>
+                        {{ form.doctor }}
+                        {% for error in form.doctor.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+                    </div>
+                    <div class="form-group">
+                        <label for="id_notes">Notes (optional)</label>
+                        {{ form.notes }}
+                        {% for error in form.notes.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-person-plus"></i> Register Walk-in</button>
+                        <a href="{% url 'dashboard' %}" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </main>
+</div>
+{% endblock %}

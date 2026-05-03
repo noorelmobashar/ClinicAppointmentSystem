@@ -3,7 +3,7 @@ from datetime import timedelta
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views import View
 
@@ -42,7 +42,11 @@ class UpdateAppointmentStatusView(LoginRequiredMixin, ReceptionistRequiredMixin,
 
 class WalkInPatientCreateView(LoginRequiredMixin, ReceptionistRequiredMixin, View):
     def get(self, request):
-        return redirect('dashboard')
+        form = WalkInPatientForm()
+        return render(request, 'reception/walk_in.html', {
+            'form': form,
+            'current_section': 'walkin'
+        })
 
     def post(self, request):
         form = WalkInPatientForm(request.POST)
@@ -57,7 +61,10 @@ class WalkInPatientCreateView(LoginRequiredMixin, ReceptionistRequiredMixin, Vie
             return redirect('dashboard')
 
         messages.error(request, "Could not register the walk-in. Please check the data and try again.")
-        return redirect('dashboard')
+        return render(request, 'reception/walk_in.html', {
+            'form': form,
+            'current_section': 'walkin'
+        })
 
     def create_walk_in_patient(self, form):
         return WalkInPatient.objects.create(

@@ -61,25 +61,13 @@
                 <span><strong>Schedule</strong><span>Clinic sessions</span></span>
             </a>
         {% elif request.user.role == 'RECEPTIONIST' %}
-            <a class="sidebar-link active" href="#">
+            <a class="sidebar-link {% if current_section == 'overview' %}active{% endif %}" href="{% url 'dashboard' %}">
                 <i class="bi bi-grid-1x2"></i>
                 <span><strong>Overview</strong><span>Desk command</span></span>
             </a>
-            <a class="sidebar-link" href="#">
-                <i class="bi bi-kanban"></i>
-                <span><strong>Traffic Board</strong><span>Live queue</span></span>
-            </a>
-            <a class="sidebar-link" href="#">
+            <a class="sidebar-link {% if current_section == 'walkin' %}active{% endif %}" href="{% url 'reception:walk_in' %}">
                 <i class="bi bi-person-plus"></i>
-                <span><strong>Patients</strong><span>Register and approve</span></span>
-            </a>
-            <a class="sidebar-link" href="#">
-                <i class="bi bi-calendar-plus"></i>
-                <span><strong>Scheduling</strong><span>Create visits</span></span>
-            </a>
-            <a class="sidebar-link" href="#">
-                <i class="bi bi-receipt"></i>
-                <span><strong>Billing Desk</strong><span>Payments</span></span>
+                <span><strong>Walk-in Registration</strong><span>Quick patient intake</span></span>
             </a>
         {% endif %}
     </nav>

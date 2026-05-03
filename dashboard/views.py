@@ -8,7 +8,6 @@ from django.utils import timezone
 from appointments.models import Appointment
 from reception.models import WalkInPatient
 from accounts.models import CustomUser
-from reception.forms import WalkInPatientForm
 from accounts.utils.profile_completion import is_profile_complete
 
 
@@ -110,7 +109,7 @@ class DashboardView(LoginRequiredMixin, View):
             appointments_qs = Appointment.objects.select_related('patient', 'slot', 'slot__doctor').order_by('slot__start_time')
 
             doctor_filter = request.GET.get('doctor')
-            date_filter = request.GET.get('date_filter')
+            date_filter = request.GET.get('date_filter') or today.isoformat()
             search_query = request.GET.get('q')
 
             if date_filter == 'all':
@@ -123,7 +122,7 @@ class DashboardView(LoginRequiredMixin, View):
                 try:
                     selected_date = date_class.fromisoformat(date_filter)
                 except ValueError:
-                    selected_date = None
+                    selected_date = today
 
                 if selected_date:
                     appointments_qs = appointments_qs.filter(slot__date=selected_date)
@@ -156,7 +155,6 @@ class DashboardView(LoginRequiredMixin, View):
                 'appointments': appointments,
                 'walkins': walkins_qs,
                 'doctors': CustomUser.objects.filter(role='DOCTOR'),
-                'walkin_form': WalkInPatientForm(),
                 'today': today,
                 'total_patients_today': appointments_qs.count(),
                 'pending_patients': appointments_qs.filter(status=Appointment.Status.CONFIRMED).count(),

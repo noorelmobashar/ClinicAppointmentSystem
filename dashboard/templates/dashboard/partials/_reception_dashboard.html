@@ -7,7 +7,7 @@
         </div>
         <div class="hero-actions">
             <a href="{% url 'patient-booking' %}" class="dash-btn primary"><i class="bi bi-calendar-plus"></i>Create Appointment</a>
-            <a href="#walkin-form" class="dash-btn secondary"><i class="bi bi-person-plus"></i>Add Walk-in</a>
+            <a href="{% url 'reception:walk_in' %}" class="dash-btn secondary"><i class="bi bi-person-plus"></i>Add Walk-in</a>
         </div>
     </section>
 
@@ -216,40 +216,14 @@
                 </div>
             </article>
 
-            <article class="side-card walkin-panel" id="walkin-form">
-                <div class="side-heading">
-                    <h2 class="side-title">Add walk-in patient</h2>
-                    <span class="section-kicker">Walk-in</span>
-                </div>
-                <p class="side-copy">Register emergency and non-booked arrivals directly from this panel.</p>
-                <form method="post" action="{% url 'reception:walk_in' %}" class="walkin-form">
-                    {% csrf_token %}
-                    <div class="mb-3">
-                        <label class="form-label">Name</label>
-                        {{ walkin_form.name }}
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Phone</label>
-                        {{ walkin_form.phone_number }}
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Doctor</label>
-                        {{ walkin_form.doctor }}
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Notes</label>
-                        {{ walkin_form.notes }}
-                    </div>
-                    <button type="submit" class="walkin-submit">Save Walk-in</button>
-                </form>
-            </article>
+            <!-- Walk-in form removed from dashboard; use dedicated reception:walk_in page -->
 
             <article class="side-card">
                 <h2 class="side-title">Quick actions</h2>
                 <p class="side-copy">Use the overview as the starting point, then move into detailed desk tasks.</p>
                 <div class="action-list">
                     <a href="#appt-{{ appointments.0.id|default:'' }}" class="action-link featured"><span><i class="bi bi-person-check me-2"></i>Check-in patient</span><i class="bi bi-plus"></i></a>
-                    <a href="#walkin-form" class="action-link"><span><i class="bi bi-person-plus me-2"></i>Add walk-in</span><i class="bi bi-arrow-right"></i></a>
+                    <a href="{% url 'reception:walk_in' %}" class="action-link"><span><i class="bi bi-person-plus me-2"></i>Add walk-in</span><i class="bi bi-arrow-right"></i></a>
                     <a href="{% url 'patient-booking' %}" class="action-link"><span><i class="bi bi-calendar-plus me-2"></i>Create appointment</span><i class="bi bi-arrow-right"></i></a>
                 </div>
             </article>
