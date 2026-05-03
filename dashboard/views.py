@@ -165,4 +165,37 @@ class DashboardView(LoginRequiredMixin, View):
                 'search_query': search_query,
             })
 
+        if request.user.role == "ADMIN":
+            from admin_panel.views import get_analytics_data
+            from datetime import timedelta
+            
+            # Date parsing
+            date_from_str = self.request.GET.get('date_from')
+            date_to_str = self.request.GET.get('date_to')
+            
+            if date_to_str:
+                try:
+                    date_to = timezone.datetime.strptime(date_to_str, '%Y-%m-%d').date()
+                    date_to = timezone.make_aware(timezone.datetime.combine(date_to, timezone.datetime.max.time()))
+                except ValueError:
+                    date_to = timezone.now()
+            else:
+                date_to = timezone.now()
+                
+            if date_from_str:
+                try:
+                    date_from = timezone.datetime.strptime(date_from_str, '%Y-%m-%d').date()
+                    date_from = timezone.make_aware(timezone.datetime.combine(date_from, timezone.datetime.min.time()))
+                except ValueError:
+                    date_from = date_to - timedelta(days=365)
+            else:
+                date_from = date_to - timedelta(days=365)
+
+            context.update(get_analytics_data(date_from, date_to))
+            context.update({
+                "dashboard_title": "Admin Control Center",
+                "dashboard_subtitle": "Overview of clinic activity and user management.",
+                "date_from": date_from.strftime('%Y-%m-%d'),
+                "date_to": date_to.strftime('%Y-%m-%d'),
+            })
         return render(request, 'dashboard/dashboard.html', context)

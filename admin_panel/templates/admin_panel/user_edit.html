@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}Edit User | Admin Dashboard{% endblock %}
+
+{% block extra_css %}
+    {% include "dashboard/partials/_dashboard_styles.html" %}
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-shell role-admin">
+    {% include "dashboard/partials/_sidebar.html" %}
+
+    <main class="dashboard-main">
+        <div class="dashboard-content" style="max-width: 800px;">
+            
+            <a href="{% url 'admin-users' %}" class="d-inline-flex align-items-center gap-2 mb-4" style="color: var(--dash-muted); font-weight: 700; text-decoration: none;">
+                <i class="bi bi-arrow-left"></i> Back to Users
+            </a>
+
+            <div class="panel-heading mb-4">
+                <h1 class="panel-title fs-2">Edit User</h1>
+                <p class="panel-subtitle">Update account details and role for <strong>{{ object.username }}</strong></p>
+            </div>
+
+            <div class="panel-card">
+                <form method="post" class="walkin-form">
+                    {% csrf_token %}
+                    
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger rounded-4">
+                            {% for error in form.non_field_errors %}
+                                <div class="fw-bold">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <label class="form-label">First Name <span class="text-danger">*</span></label>
+                            <input type="text" name="first_name" class="walkin-input {% if form.first_name.errors %}border-danger{% endif %}" value="{{ form.first_name.value|default:'' }}" required>
+                            {% if form.first_name.errors %}<div class="text-danger mt-1 small fw-bold">{{ form.first_name.errors.0 }}</div>{% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Last Name <span class="text-danger">*</span></label>
+                            <input type="text" name="last_name" class="walkin-input {% if form.last_name.errors %}border-danger{% endif %}" value="{{ form.last_name.value|default:'' }}" required>
+                            {% if form.last_name.errors %}<div class="text-danger mt-1 small fw-bold">{{ form.last_name.errors.0 }}</div>{% endif %}
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Username <span class="text-danger">*</span></label>
+                            <input type="text" name="username" class="walkin-input {% if form.username.errors %}border-danger{% endif %}" value="{{ form.username.value|default:'' }}" required>
+                            {% if form.username.errors %}<div class="text-danger mt-1 small fw-bold">{{ form.username.errors.0 }}</div>{% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Email Address <span class="text-danger">*</span></label>
+                            <input type="email" name="email" class="walkin-input {% if form.email.errors %}border-danger{% endif %}" value="{{ form.email.value|default:'' }}" required>
+                            {% if form.email.errors %}<div class="text-danger mt-1 small fw-bold">{{ form.email.errors.0 }}</div>{% endif %}
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Phone Number</label>
+                            <input type="text" name="phone_number" class="walkin-input {% if form.phone_number.errors %}border-danger{% endif %}" value="{{ form.phone_number.value|default:'' }}">
+                            {% if form.phone_number.errors %}<div class="text-danger mt-1 small fw-bold">{{ form.phone_number.errors.0 }}</div>{% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Role <span class="text-danger">*</span></label>
+                            <select name="role" class="form-select walkin-input px-3 {% if form.role.errors %}border-danger{% endif %}" required>
+                                {% for value, label in form.role.field.choices %}
+                                    <option value="{{ value }}" {% if form.role.value == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                            {% if form.role.errors %}<div class="text-danger mt-1 small fw-bold">{{ form.role.errors.0 }}</div>{% endif %}
+                        </div>
+
+                        <div class="col-12 mt-4 pt-3 border-top">
+                            <div class="form-check form-switch d-flex align-items-center gap-3">
+                                <input class="form-check-input" type="checkbox" role="switch" id="activeSwitch" name="is_active" style="width: 48px; height: 24px;" {% if form.is_active.value %}checked{% endif %}>
+                                <label class="form-check-label fw-bold" for="activeSwitch" style="color: var(--dash-text); padding-top: 2px;">Account is Active</label>
+                            </div>
+                            <p class="text-muted small mt-2 fw-bold">Inactive users cannot log into the system.</p>
+                        </div>
+                    </div>
+
+                    <!-- Profile Specific Fields -->
+                    <div id="doctor-fields" class="row g-4 mt-1 profile-fields" style="display: none;">
+                        <div class="col-12"><h4 class="fs-5 fw-bold mb-0" style="color: var(--role-primary);">Doctor Profile Details</h4></div>
+                        <div class="col-md-6">
+                            <label class="form-label">Specialty</label>
+                            <input type="text" name="specialty" class="walkin-input {% if form.specialty.errors %}border-danger{% endif %}" value="{{ form.specialty.value|default:'' }}">
+                            {% if form.specialty.errors %}<div class="text-danger mt-1 small fw-bold">{{ form.specialty.errors.0 }}</div>{% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Consultation Fee (EGP)</label>
+                            <input type="number" step="0.01" name="consultation_fee" class="walkin-input {% if form.consultation_fee.errors %}border-danger{% endif %}" value="{{ form.consultation_fee.value|default:'' }}">
+                            {% if form.consultation_fee.errors %}<div class="text-danger mt-1 small fw-bold">{{ form.consultation_fee.errors.0 }}</div>{% endif %}
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Bio</label>
+                            <textarea name="bio" class="walkin-input walkin-textarea {% if form.bio.errors %}border-danger{% endif %}">{{ form.bio.value|default:'' }}</textarea>
+                            {% if form.bio.errors %}<div class="text-danger mt-1 small fw-bold">{{ form.bio.errors.0 }}</div>{% endif %}
+                        </div>
+                    </div>
+
+                    <div id="patient-fields" class="row g-4 mt-1 profile-fields" style="display: none;">
+                        <div class="col-12"><h4 class="fs-5 fw-bold mb-0" style="color: var(--role-primary);">Patient Profile Details</h4></div>
+                        <div class="col-md-6">
+                            <label class="form-label">Date of Birth</label>
+                            <input type="date" name="date_of_birth" class="walkin-input {% if form.date_of_birth.errors %}border-danger{% endif %}" value="{{ form.date_of_birth.value|default:'' }}">
+                            {% if form.date_of_birth.errors %}<div class="text-danger mt-1 small fw-bold">{{ form.date_of_birth.errors.0 }}</div>{% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Blood Type</label>
+                            <input type="text" name="blood_type" class="walkin-input {% if form.blood_type.errors %}border-danger{% endif %}" value="{{ form.blood_type.value|default:'' }}" placeholder="e.g. O+, A-">
+                            {% if form.blood_type.errors %}<div class="text-danger mt-1 small fw-bold">{{ form.blood_type.errors.0 }}</div>{% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mt-5 d-flex gap-3 justify-content-end">
+                        <a href="{% url 'admin-users' %}" class="btn" style="background: #f1f5f9; color: #475569; font-weight: 800; border-radius: 12px; padding: 12px 24px;">Cancel</a>
+                        <button type="submit" class="btn" style="background: var(--role-primary); color: white; font-weight: 800; border-radius: 12px; padding: 12px 32px; box-shadow: 0 10px 24px color-mix(in srgb, var(--role-primary) 32%, transparent);">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const roleSelect = document.querySelector('select[name="role"]');
+        const docFields = document.getElementById('doctor-fields');
+        const patFields = document.getElementById('patient-fields');
+
+        function toggleFields() {
+            docFields.style.display = 'none';
+            patFields.style.display = 'none';
+            if (roleSelect.value === 'DOCTOR') {
+                docFields.style.display = 'flex';
+            } else if (roleSelect.value === 'PATIENT') {
+                patFields.style.display = 'flex';
+            }
+        }
+
+        roleSelect.addEventListener('change', toggleFields);
+        toggleFields(); // Init on load
+    });
+</script>
+{% endblock %}

@@ -53,6 +53,13 @@
         --role-wash: rgba(249, 115, 22, 0.18);
     }
 
+    .dashboard-shell.role-admin {
+        --role-primary: #8b5cf6;
+        --role-secondary: #c084fc;
+        --role-accent: #f3e8ff;
+        --role-wash: rgba(139, 92, 246, 0.18);
+    }
+
     .dashboard-main {
         margin-left: 300px;
         min-height: 100vh;
@@ -847,7 +854,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="dashboard-shell {% if request.user.role == 'DOCTOR' %}role-doctor{% elif request.user.role == 'RECEPTIONIST' %}role-reception{% else %}role-patient{% endif %}">
+<div class="dashboard-shell {% if request.user.role == 'DOCTOR' %}role-doctor{% elif request.user.role == 'RECEPTIONIST' %}role-reception{% elif request.user.role == 'ADMIN' %}role-admin{% else %}role-patient{% endif %}">
     {% include "dashboard/partials/_sidebar.html" %}
 
     <main class="dashboard-main">
@@ -858,6 +865,8 @@
                 {% include "dashboard/partials/_doctor_dashboard.html" %}
             {% elif request.user.role == 'RECEPTIONIST' %}
                 {% include "dashboard/partials/_reception_dashboard.html" %}
+            {% elif request.user.role == 'ADMIN' %}
+                {% include "dashboard/partials/_admin_dashboard.html" %}
             {% else %}
                 <section class="panel-card">
                     <h1 class="panel-title">Dashboard unavailable</h1>
