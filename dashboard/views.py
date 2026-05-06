@@ -9,7 +9,7 @@ from appointments.models import Appointment
 from reception.models import WalkInPatient
 from accounts.models import CustomUser
 from accounts.utils.profile_completion import is_profile_complete
-
+from admin_panel.views import get_analytics_data
 
 class DashboardView(LoginRequiredMixin, View):
     def get(self, request):
@@ -167,8 +167,6 @@ class DashboardView(LoginRequiredMixin, View):
             })
 
         if request.user.role == "ADMIN":
-            from admin_panel.views import get_analytics_data
-            from datetime import timedelta
             
             # Date parsing
             date_from_str = self.request.GET.get('date_from')
