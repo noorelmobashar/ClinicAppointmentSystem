@@ -125,7 +125,7 @@ def StripeWebhookView(request):
                 return HttpResponse(status=200)
 
             # Already confirmed (duplicate webhook or same user paying from multiple tabs)
-            if appointment.status == Appointment.Status.CONFIRMED:
+            if appointment.status == Appointment.Status.REQUESTED:
                 if session.payment_intent:
                     stripe.Refund.create(payment_intent=session.payment_intent)
                 return HttpResponse(status=200)
@@ -155,7 +155,7 @@ def StripeWebhookView(request):
             slot.is_booked = True
             slot.save(update_fields=["is_booked"])
 
-            appointment.status = Appointment.Status.CONFIRMED
+            appointment.status = Appointment.Status.REQUESTED
             appointment.save(update_fields=["status"])
 
             if txn:
