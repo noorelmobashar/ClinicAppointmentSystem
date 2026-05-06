@@ -6,7 +6,6 @@
             <p>Coordinate arrivals, appointment creation, patient approvals, and live queue handoffs from one structured desk view.</p>
         </div>
         <div class="hero-actions">
-            <a href="{% url 'patient-booking' %}" class="dash-btn primary"><i class="bi bi-calendar-plus"></i>Create Appointment</a>
             <a href="{% url 'reception:walk_in' %}" class="dash-btn secondary"><i class="bi bi-person-plus"></i>Add Walk-in</a>
         </div>
     </section>
@@ -90,8 +89,14 @@
                                 <div class="appointment-time">{{ appt.slot.start_time|time:"H:i" }}</div>
                                 <span class="appointment-icon"><i class="bi bi-person-check"></i></span>
                                 <div>
+                                    <div class="appointment-title">{{ appt.display_patient_name }}</div>
                                     <div class="queue-fee">EGP {{ appt.doctor.doctor_profile.consultation_fee|default_if_none:0|floatformat:2 }}</div>
-                                    <div class="appointment-meta">Dr. {{ appt.slot.doctor.first_name }} {{ appt.slot.doctor.last_name }}</div>
+                                    <div class="appointment-meta">
+                                        Dr. {{ appt.slot.doctor.first_name }} {{ appt.slot.doctor.last_name }}
+                                        {% if appt.slot.doctor.doctor_profile and appt.slot.doctor.doctor_profile.specialty %}
+                                            - {{ appt.slot.doctor.doctor_profile.specialty }}
+                                        {% endif %}
+                                    </div>
                                 </div>
                                 <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
                                     <span class="status-badge status-{{ appt.status|lower }}">{{ appt.get_status_display }}</span>
@@ -214,15 +219,7 @@
 
             <!-- Walk-in form removed from dashboard; use dedicated reception:walk_in page -->
 
-            <article class="side-card">
-                <h2 class="side-title">Quick actions</h2>
-                <p class="side-copy">Use the overview as the starting point, then move into detailed desk tasks.</p>
-                <div class="action-list">
-                    <a href="#appt-{{ appointments.0.id|default:'' }}" class="action-link featured"><span><i class="bi bi-person-check me-2"></i>Check-in patient</span><i class="bi bi-plus"></i></a>
-                    <a href="{% url 'reception:walk_in' %}" class="action-link"><span><i class="bi bi-person-plus me-2"></i>Add walk-in</span><i class="bi bi-arrow-right"></i></a>
-                    <a href="{% url 'patient-booking' %}" class="action-link"><span><i class="bi bi-calendar-plus me-2"></i>Create appointment</span><i class="bi bi-arrow-right"></i></a>
-                </div>
-            </article>
+        
         </aside>
     </section>
 </div>
@@ -286,14 +283,15 @@
                     return res.json();
                 })
                 .then(function (data) {
+                    const slots = Array.isArray(data.slots) ? data.slots : [];
                     timeSelect.innerHTML = '';
-                    if (!Array.isArray(data) || data.length === 0) {
+                    if (slots.length === 0) {
                         timeSelect.innerHTML = '<option value="">No available slots</option>';
                         return;
                     }
 
                     timeSelect.innerHTML = '<option value="">Select slot</option>';
-                    data.forEach(function (slot) {
+                    slots.forEach(function (slot) {
                         timeSelect.innerHTML += `<option value="${slot.time}">${slot.time}</option>`;
                     });
                 })

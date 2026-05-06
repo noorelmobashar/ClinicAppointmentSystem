@@ -107,11 +107,16 @@ class DashboardView(LoginRequiredMixin, View):
 
         if request.user.role == "RECEPTIONIST":
             today = timezone.now().date()
-            appointments_qs = Appointment.objects.select_related('patient', 'slot', 'slot__doctor').order_by('slot__start_time')
+            appointments_qs = Appointment.objects.select_related(
+                'patient',
+                'slot',
+                'slot__doctor',
+                'slot__doctor__doctor_profile',
+            ).order_by('slot__start_time')
 
-            doctor_filter = request.GET.get('doctor')
+            doctor_filter = request.GET.get('doctor') or ''
             date_filter = request.GET.get('date_filter') or today.isoformat()
-            search_query = request.GET.get('q')
+            search_query = (request.GET.get('q') or '').strip()
 
             if date_filter == 'all':
                 date_filter = ''

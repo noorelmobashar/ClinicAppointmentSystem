@@ -4,6 +4,8 @@ from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import ValidationError
+from django.db import IntegrityError, transaction
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views import View
@@ -142,6 +144,10 @@ class RescheduleAppointmentView(LoginRequiredMixin, ReceptionistRequiredMixin, V
             reason = form.cleaned_data['reason']
 
             old_slot = appointment.slot
+
+            if old_slot.date == new_date and old_slot.start_time == new_start_time:
+                messages.info(request, "Please choose a different slot to reschedule.")
+                return redirect('dashboard')
             
           
             new_slot, created = AppointmentSlot.objects.get_or_create(
@@ -150,32 +156,46 @@ class RescheduleAppointmentView(LoginRequiredMixin, ReceptionistRequiredMixin, V
                 start_time=new_start_time,
                 defaults={
                     'end_time': (timezone.datetime.combine(new_date, new_start_time) + timedelta(minutes=30)).time(),
-                    'is_booked': True
+                    'is_booked': False
                 }
             )
             
             if not created and new_slot.is_booked:
                 messages.error(request, "The selected new slot is already booked.")
                 return redirect('dashboard')
-                
-            new_slot.is_booked = True
-            new_slot.save()
-            
-            old_slot.is_booked = False
-            old_slot.save()
-            
-            RescheduleHistory.objects.create(
-                appointment=appointment,
-                old_slot=old_slot,
-                new_slot=new_slot,
-                changed_by=request.user,
-                reason=reason
-            )
-            
-            appointment.slot = new_slot
-            appointment.save()
-            
-            messages.success(request, f"Successfully rescheduled appointment for {appointment.patient}.")
+
+            try:
+                with transaction.atomic():
+                    appointment.slot = new_slot
+                    appointment.save()
+
+                    new_slot.is_booked = True
+                    new_slot.save(update_fields=["is_booked"])
+
+                    if not Appointment.objects.active().filter(slot_id=old_slot.id).exists():
+                        old_slot.is_booked = False
+                        old_slot.save(update_fields=["is_booked"])
+
+                    RescheduleHistory.objects.create(
+                        appointment=appointment,
+                        old_slot=old_slot,
+                        new_slot=new_slot,
+                        changed_by=request.user,
+                        reason=reason
+                    )
+
+                messages.success(request, f"Successfully rescheduled appointment for {appointment.patient}.")
+            except ValidationError as exc:
+                if hasattr(exc, "message_dict"):
+                    errors = []
+                    for field_errors in exc.message_dict.values():
+                        errors.extend(field_errors)
+                    message = errors[0] if errors else "Failed to reschedule due to validation rules."
+                else:
+                    message = exc.messages[0] if getattr(exc, "messages", None) else "Failed to reschedule due to validation rules."
+                messages.error(request, message)
+            except IntegrityError:
+                messages.error(request, "Could not reschedule due to a conflicting appointment. Please choose another slot.")
             
         else:
             messages.error(request, "Failed to reschedule. Please check the form data.")
