@@ -4,10 +4,10 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.utils import timezone
+from payments.views import process_appointment_refund
 
 from .models import (
     Appointment,
-    AppointmentCancellation,
     AppointmentSlot,
     DoctorSchedule,
 )
@@ -122,7 +122,8 @@ def create_pending_appointment(*, patient, slot_id):
         )
 
         try:
-            appointment.save()
+            with transaction.atomic():
+                appointment.save()
         except IntegrityError as exc:
             if Appointment.objects.active().filter(slot_id=slot.id).exists():
                 raise ValidationError(
@@ -144,6 +145,7 @@ def create_pending_appointment(*, patient, slot_id):
 
 
 def cancel_patient_appointment(*, appointment_id, patient, reason):
+
     with transaction.atomic():
         appointment = (
             Appointment.objects.select_for_update()
@@ -160,18 +162,16 @@ def cancel_patient_appointment(*, appointment_id, patient, reason):
                 "You can cancel only requested or confirmed appointments."
             )
 
-        AppointmentCancellation.objects.create(
-            appointment=appointment,
-            cancelled_by=patient,
-            previous_status=appointment.status,
-            reason=reason,
-        )
-
         appointment.status = Appointment.Status.CANCELLED
-        appointment.save(update_fields=["status"])
+        appointment.cancellation_reason = reason
+        appointment.cancelled_by = patient
+        appointment.cancelled_at = timezone.now()
+        appointment.save(update_fields=["status", "cancellation_reason", "cancelled_by", "cancelled_at"])
 
         if not Appointment.objects.active().filter(slot_id=slot.id).exists():
             slot.is_booked = False
             slot.save(update_fields=["is_booked"])
 
-    return appointment
+        refund_info = process_appointment_refund(appointment)
+
+    return appointment, refund_info

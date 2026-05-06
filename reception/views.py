@@ -1,4 +1,5 @@
 from datetime import timedelta
+from decimal import Decimal
 
 from django.contrib import messages
 from django.contrib.auth import get_user_model
@@ -8,6 +9,7 @@ from django.utils import timezone
 from django.views import View
 
 from appointments.models import Appointment, AppointmentSlot, RescheduleHistory
+from payments.views import process_appointment_refund
 from .models import WalkInPatient
 from .forms import WalkInPatientForm, UpdateStatusForm, RescheduleForm
 
@@ -32,10 +34,29 @@ class UpdateAppointmentStatusView(LoginRequiredMixin, ReceptionistRequiredMixin,
                 if appointment.status != Appointment.Status.CHECKED_IN:
                     messages.error(request, "Only checked‑in appointments can be marked as completed.")
                     return redirect('dashboard')
-            appointment.status = new_status
-            appointment.save()
-            name = appointment.patient.get_full_name() or appointment.patient.username
-            messages.success(request, f"Status for {name} changed to {appointment.status}.")
+            
+            if new_status == Appointment.Status.CANCELLED:
+                refund_info = process_appointment_refund(appointment, refund_percentage=Decimal("1.00"))
+                
+                slot = appointment.slot
+                appointment.status = Appointment.Status.CANCELLED
+                appointment.cancelled_by = request.user
+                appointment.cancelled_at = timezone.now()
+                appointment.save(update_fields=["status", "cancelled_by", "cancelled_at"])
+                
+                if not Appointment.objects.active().filter(slot_id=slot.id).exists():
+                    slot.is_booked = False
+                    slot.save(update_fields=["is_booked"])
+                
+                msg = f"Appointment for {appointment.patient} has been cancelled."
+                if refund_info:
+                    msg += f" A full refund of EGP {refund_info['refunded_amount']} has been processed."
+                messages.success(request, msg)
+            else:
+                appointment.status = new_status
+                appointment.save()
+                name = appointment.patient.get_full_name() or appointment.patient.username
+                messages.success(request, f"Status for {name} changed to {appointment.status}.")
 
         return redirect('dashboard')
 

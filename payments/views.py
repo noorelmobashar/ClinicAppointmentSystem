@@ -1,3 +1,4 @@
+import logging
 from decimal import Decimal
 from datetime import timedelta
 
@@ -7,6 +8,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
+from django.core.paginator import Paginator
 from django.db import transaction
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
@@ -18,6 +20,45 @@ from appointments.models import Appointment, AppointmentSlot
 from .models import PaymentTransaction
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
+logger = logging.getLogger(__name__)
+
+REFUND_PERCENTAGE = Decimal("0.80")
+
+
+def process_appointment_refund(appointment, refund_percentage=None):
+    if refund_percentage is None:
+        refund_percentage = REFUND_PERCENTAGE
+
+    try:
+        original_txn = PaymentTransaction.objects.get(
+            appointment=appointment,
+            status=PaymentTransaction.Status.PAID,
+        )
+    except PaymentTransaction.DoesNotExist:
+        return None
+
+    refund_amount = (original_txn.amount * refund_percentage).quantize(Decimal("0.01"))
+    deducted_amount = original_txn.amount - refund_amount
+
+    checkout_session = stripe.checkout.Session.retrieve(original_txn.stripe_checkout_id)
+    if checkout_session.payment_intent:
+        stripe.Refund.create(
+            payment_intent=checkout_session.payment_intent,
+            amount=int(refund_amount * 100),
+        )
+
+    PaymentTransaction.objects.create(
+        appointment=appointment,
+        stripe_checkout_id=f"refund_{original_txn.stripe_checkout_id}",
+        amount=refund_amount,
+        status=PaymentTransaction.Status.REFUNDED,
+        paid_at=now(),
+    )
+
+    return {
+        "refunded_amount": refund_amount,
+        "deducted_amount": deducted_amount,
+    }
 
 
 @login_required
@@ -134,7 +175,10 @@ def StripeWebhookView(request):
             
             # Retrieve the transaction
             try:
-                txn = PaymentTransaction.objects.get(appointment=appointment)
+                txn = PaymentTransaction.objects.get(
+                    appointment=appointment,
+                    status=PaymentTransaction.Status.PENDING,
+                )
             except PaymentTransaction.DoesNotExist:
                 txn = None
 
@@ -223,4 +267,22 @@ def PaymentCancelView(request, appointment_id=None):
     return render(request, "payments/cancel.html", {
         "dashboard_title": "Payment Cancelled",
         "dashboard_subtitle": "Your appointment was not confirmed.",
+    })
+
+
+@login_required
+def PatientPaymentHistoryView(request):
+    payments_list = PaymentTransaction.objects.filter(
+        appointment__patient=request.user
+    ).select_related("appointment", "appointment__doctor", "appointment__slot").order_by("-created_at")
+    
+    paginator = Paginator(payments_list, 10)  # Show 10 payments per page
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+    
+    return render(request, "payments/history.html", {
+        "payments": page_obj,
+        "current_section": "payments",
+        "dashboard_title": "Payment History",
+        "dashboard_subtitle": "Review your bills, receipts, and refund records.",
     })

@@ -4,9 +4,11 @@ from .views import (
     StripeWebhookView,
     PaymentSuccessView,
     PaymentCancelView,
+    PatientPaymentHistoryView,
 )
 
 urlpatterns = [
+    path("history/", PatientPaymentHistoryView, name="patient-payments"),
     path("checkout/<int:appointment_id>/", CreateCheckoutSessionView, name="stripe-checkout"),
     path("webhook/", StripeWebhookView, name="stripe-webhook"),
     path("success/", PaymentSuccessView, name="payment-success"),

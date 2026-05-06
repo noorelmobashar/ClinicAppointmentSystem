@@ -8,7 +8,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from accounts.models import DoctorProfile
-from .models import Appointment, AppointmentCancellation, AppointmentSlot
+from .models import Appointment, AppointmentSlot
 from .services import AppointmentCancellationNotAllowed, cancel_patient_appointment, create_pending_appointment
 
 User = get_user_model()
@@ -19,21 +19,25 @@ class AppointmentBookingValidationTests(TestCase):
         self.client = Client()
         self.patient_one = User.objects.create_user(
             username="patient_one",
+            email="patient1@example.com",
             password="password123",
             role=User.Role.PATIENT,
         )
         self.patient_two = User.objects.create_user(
             username="patient_two",
+            email="patient2@example.com",
             password="password123",
             role=User.Role.PATIENT,
         )
         self.doctor_one = User.objects.create_user(
             username="doctor_one",
+            email="doctor1@example.com",
             password="password123",
             role=User.Role.DOCTOR,
         )
         self.doctor_two = User.objects.create_user(
             username="doctor_two",
+            email="doctor2@example.com",
             password="password123",
             role=User.Role.DOCTOR,
         )
@@ -159,13 +163,12 @@ class AppointmentBookingValidationTests(TestCase):
 
         appointment.refresh_from_db()
         slot.refresh_from_db()
-        cancellation = AppointmentCancellation.objects.get(appointment=appointment)
 
         self.assertEqual(appointment.status, Appointment.Status.CANCELLED)
         self.assertFalse(slot.is_booked)
-        self.assertEqual(cancellation.previous_status, Appointment.Status.CONFIRMED)
-        self.assertEqual(cancellation.reason, "I can no longer attend.")
-        self.assertEqual(cancellation.cancelled_by, self.patient_one)
+        self.assertEqual(appointment.cancellation_reason, "I can no longer attend.")
+        self.assertEqual(appointment.cancelled_by, self.patient_one)
+        self.assertIsNotNone(appointment.cancelled_at)
 
     def test_patient_cannot_cancel_awaiting_payment_or_completed(self):
         slots_by_status = {
@@ -193,7 +196,7 @@ class AppointmentBookingValidationTests(TestCase):
 
                 appointment.refresh_from_db()
                 self.assertEqual(appointment.status, status)
-                self.assertFalse(AppointmentCancellation.objects.filter(appointment=appointment).exists())
+                self.assertIsNone(appointment.cancellation_reason)
 
     def test_cancel_view_requires_reason_and_owns_appointment(self):
         slot = self.create_slot(self.doctor_one, "19:00:00", "19:30:00")

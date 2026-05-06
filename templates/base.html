@@ -193,15 +193,17 @@
     </header>
 
     <main class="clinic-page">
-        {% if messages %}
-            <div class="container pt-4">
-                {% for message in messages %}
-                    <div class="alert alert-{{ message.tags|default:'info' }} rounded-4 mb-2" role="alert">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            </div>
-        {% endif %}
+        {% block messages %}
+            {% if messages %}
+                <div class="container pt-4">
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags|default:'info' }} rounded-4 mb-2" role="alert">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endblock %}
 
         {% block content %}{% endblock %}
     </main>
@@ -214,5 +216,6 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

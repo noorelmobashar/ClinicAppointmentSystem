@@ -358,14 +358,43 @@
             justify-items: start;
         }
     }
+
+    .modal-overlay{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(15,23,42,.55);backdrop-filter:blur(6px);animation:modalFadeIn .25s ease}
+    @keyframes modalFadeIn{from{opacity:0}to{opacity:1}}
+    .modal-box{width:min(26rem,92vw);padding:2.2rem 2rem;border-radius:24px;background:#fff;box-shadow:0 32px 72px rgba(15,23,42,.18);text-align:center;animation:modalSlideUp .3s ease}
+    @keyframes modalSlideUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+    .modal-icon{width:3.4rem;height:3.4rem;margin:0 auto 1rem;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.5rem}
+    .modal-icon-warning{background:#fef3c7;color:#d97706}
+    .modal-icon-success{background:#dcfce7;color:#16a34a}
+    .modal-box h3{margin:0 0 .65rem;font-size:1.25rem;font-weight:800}
+    .modal-box p{margin:0 0 1.4rem;color:#475569;line-height:1.7;font-size:.95rem}
+    .modal-actions{display:flex;gap:.75rem;justify-content:center}
+    .modal-btn{padding:.55rem 1.4rem;border:0;border-radius:999px;font-size:.88rem;font-weight:700;cursor:pointer;transition:all .2s ease}
+    .modal-btn:disabled{opacity:.5;cursor:not-allowed}
+    .modal-btn-secondary{background:#f1f5f9;color:#334155}.modal-btn-secondary:hover{background:#e2e8f0}
+    .modal-btn-danger{background:linear-gradient(135deg,#b91c1c,#ef4444);color:#fff;box-shadow:0 4px 14px rgba(185,28,28,.22)}.modal-btn-danger:hover{background:linear-gradient(135deg,#991b1b,#dc2626)}
+    .modal-btn-primary{background:linear-gradient(135deg,#1d4ed8,#0891b2);color:#fff;box-shadow:0 4px 14px rgba(29,78,216,.22)}.modal-btn-primary:hover{background:linear-gradient(135deg,#1e40af,#0e7490)}
 </style>
 {% endblock %}
+
+{% block messages %}{% endblock %}
 
 {% block content %}
 <div class="dashboard-shell">
     {% include "dashboard/partials/_sidebar.html" %}
     <div class="dashboard-main">
         {% include "dashboard/partials/_topbar.html" %}
+
+        {% if messages %}
+            <div class="dashboard-messages mt-4">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags|default:'info' }} dashboard-alert" role="alert">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
 
         <section class="appointments-shell">
             <section class="appointments-hero">
@@ -427,19 +456,17 @@
                                                 <i class="bi bi-credit-card me-1"></i>Pay Now
                                             </a>
                                         {% elif appointment.status == "REQUESTED" or appointment.status == "CONFIRMED" %}
-                                            <form method="post" action="{% url 'cancel-appointment' appointment.id %}" class="cancel-form">
-                                                {% csrf_token %}
+                                            <div class="cancel-form">
                                                 <textarea
-                                                    name="reason"
+                                                    id="cancel-reason-{{ appointment.id }}"
                                                     class="cancel-reason"
                                                     rows="2"
                                                     placeholder="Why are you cancelling?"
-                                                    required
                                                 ></textarea>
-                                                <button type="submit" class="cancel-btn">
+                                                <button type="button" class="cancel-btn" onclick="openCancelModal({{ appointment.id }})">
                                                     <i class="bi bi-x-circle me-1"></i>Cancel Appointment
                                                 </button>
-                                            </form>
+                                            </div>
                                         {% elif appointment.consultation %}
                                             <a href="{% url 'emr:patient-consultation-summary' appointment.id %}" class="summary-btn">
                                                 <i class="bi bi-file-earmark-medical me-1"></i>View Summary
@@ -525,4 +552,87 @@
         </section>
     </div>
 </div>
+<!-- Cancel Warning Modal -->
+<div id="cancelWarningModal" class="modal-overlay" style="display:none;">
+    <div class="modal-box">
+        <div class="modal-icon modal-icon-warning"><i class="bi bi-exclamation-triangle-fill"></i></div>
+        <h3>Are you sure?</h3>
+        <p id="cancelWarningText"></p>
+        <div class="modal-actions">
+            <button class="modal-btn modal-btn-secondary" onclick="closeCancelModal()">Go Back</button>
+            <button class="modal-btn modal-btn-danger" id="confirmCancelBtn" onclick="confirmCancel()">Yes, Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Refund Success Modal -->
+<div id="refundSuccessModal" class="modal-overlay" style="display:none;">
+    <div class="modal-box">
+        <div class="modal-icon modal-icon-success"><i class="bi bi-check-circle-fill"></i></div>
+        <h3>Appointment Cancelled</h3>
+        <p id="refundSuccessText"></p>
+        <div class="modal-actions">
+            <button class="modal-btn modal-btn-primary" onclick="location.reload()">OK</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let pendingAppointmentId = null;
+let pendingReason = '';
+
+function openCancelModal(appointmentId) {
+    const reasonEl = document.getElementById('cancel-reason-' + appointmentId);
+    const reason = (reasonEl ? reasonEl.value : '').trim();
+    if (!reason) { alert('Please provide a cancellation reason.'); return; }
+    pendingAppointmentId = appointmentId;
+    pendingReason = reason;
+    document.getElementById('confirmCancelBtn').disabled = true;
+    document.getElementById('cancelWarningText').textContent = 'Loading refund details\u2026';
+    document.getElementById('cancelWarningModal').style.display = 'flex';
+    fetch('/appointments/my/' + appointmentId + '/cancel/preflight/', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        .then(r => r.json())
+        .then(data => {
+            if (data.error) { alert(data.error); closeCancelModal(); return; }
+            if (data.has_payment) {
+                document.getElementById('cancelWarningText').innerHTML =
+                    '<strong>20% cancellation fee applies.</strong><br>' +
+                    'Original payment: <strong>EGP ' + data.original_amount + '</strong><br>' +
+                    'Deducted: <strong>EGP ' + data.deducted_amount + '</strong><br>' +
+                    'Refunded to your card: <strong>EGP ' + data.refund_amount + '</strong>';
+            } else {
+                document.getElementById('cancelWarningText').textContent = 'This appointment has no associated payment. It will simply be cancelled.';
+            }
+            document.getElementById('confirmCancelBtn').disabled = false;
+        })
+        .catch(() => { alert('Could not load refund details.'); closeCancelModal(); });
+}
+
+function closeCancelModal() { document.getElementById('cancelWarningModal').style.display = 'none'; pendingAppointmentId = null; }
+
+function confirmCancel() {
+    if (!pendingAppointmentId) return;
+    const btn = document.getElementById('confirmCancelBtn');
+    btn.disabled = true; btn.textContent = 'Cancelling\u2026';
+    const body = new URLSearchParams();
+    body.append('reason', pendingReason);
+    body.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+    fetch('/appointments/my/' + pendingAppointmentId + '/cancel/', { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: body })
+        .then(r => r.json())
+        .then(data => {
+            closeCancelModal();
+            const amt = parseFloat(data.refunded_amount || 0);
+            if (amt > 0) {
+                document.getElementById('refundSuccessText').innerHTML =
+                    'Your appointment has been cancelled and <strong>EGP ' + data.refunded_amount + '</strong> has been sent back to your card.';
+            } else {
+                document.getElementById('refundSuccessText').textContent = 'Your appointment has been cancelled successfully.';
+            }
+            document.getElementById('refundSuccessModal').style.display = 'flex';
+        })
+        .catch(() => { closeCancelModal(); alert('An error occurred while cancelling.'); });
+}
+</script>
 {% endblock %}

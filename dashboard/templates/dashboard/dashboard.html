@@ -600,6 +600,36 @@
         background: #fef3c7;
     }
 
+    .dashboard-alert {
+        border: none;
+        border-radius: 18px;
+        font-weight: 800;
+        padding: 1rem 1.5rem;
+        box-shadow: var(--dash-shadow-soft);
+        animation: slideDown 0.4s ease;
+    }
+
+    @keyframes slideDown {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .alert-success.dashboard-alert {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .alert-error.dashboard-alert,
+    .alert-danger.dashboard-alert {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .status-failed {
+        color: #b91c1c;
+        background: #fee2e2;
+    }
+
     .status-live {
         color: var(--role-primary);
         background: color-mix(in srgb, var(--role-accent) 76%, white);
@@ -853,11 +883,24 @@
 </style>
 {% endblock %}
 
+{% block messages %}{% endblock %}
+
 {% block content %}
 <div class="dashboard-shell {% if request.user.role == 'DOCTOR' %}role-doctor{% elif request.user.role == 'RECEPTIONIST' %}role-reception{% elif request.user.role == 'ADMIN' %}role-admin{% else %}role-patient{% endif %}">
     {% include "dashboard/partials/_sidebar.html" %}
 
     <main class="dashboard-main">
+        {% if messages %}
+            <div class="dashboard-messages mb-4">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags|default:'info' }} dashboard-alert" role="alert">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
         <div class="dashboard-content">
             {% if request.user.role == 'PATIENT' %}
                 {% include "dashboard/partials/_patient_dashboard.html" %}

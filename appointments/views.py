@@ -14,7 +14,10 @@ from .services import (
     cancel_patient_appointment,
     create_pending_appointment,
 )
+from payments.models import PaymentTransaction
 
+from decimal import Decimal
+from payments.views import REFUND_PERCENTAGE
 
 @login_required
 def available_slots(request):
@@ -168,6 +171,49 @@ def patient_history(request):
 
 
 @login_required
+def cancel_appointment_preflight(request, appointment_id):
+
+
+
+    appointment = get_object_or_404(
+        Appointment,
+        pk=appointment_id,
+        patient=request.user,
+    )
+
+    if appointment.status not in {
+        Appointment.Status.REQUESTED,
+        Appointment.Status.CONFIRMED,
+    }:
+        return JsonResponse(
+            {"error": "You can cancel only requested or confirmed appointments."},
+            status=400,
+        )
+
+    # Look for a PAID transaction to calculate the refund
+    paid_txn = (
+        PaymentTransaction.objects
+        .filter(appointment=appointment, status=PaymentTransaction.Status.PAID)
+        .first()
+    )
+
+    if paid_txn:
+        refund_amount = (paid_txn.amount * REFUND_PERCENTAGE).quantize(Decimal("0.01"))
+        deducted_amount = paid_txn.amount - refund_amount
+    else:
+        refund_amount = Decimal("0.00")
+        deducted_amount = Decimal("0.00")
+
+    return JsonResponse({
+        "appointment_id": appointment.id,
+        "has_payment": paid_txn is not None,
+        "original_amount": str(paid_txn.amount) if paid_txn else "0.00",
+        "refund_amount": str(refund_amount),
+        "deducted_amount": str(deducted_amount),
+    })
+
+
+@login_required
 def cancel_appointment(request, appointment_id):
     if request.method != "POST":
         return HttpResponse("Method not allowed", status=405)
@@ -178,7 +224,7 @@ def cancel_appointment(request, appointment_id):
         return redirect("my-appointments")
 
     try:
-        cancel_patient_appointment(
+        appointment, refund_info = cancel_patient_appointment(
             appointment_id=appointment_id,
             patient=request.user,
             reason=form.cleaned_data["reason"],
@@ -189,5 +235,22 @@ def cancel_appointment(request, appointment_id):
         messages.error(request, exc.messages[0])
         return redirect("my-appointments")
 
-    messages.success(request, "Your appointment has been cancelled.")
+    # Return JSON if the client asked for it (AJAX cancel from the modal)
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        if refund_info:
+            return JsonResponse({
+                "status": "cancelled",
+                "refunded_amount": str(refund_info["refunded_amount"]),
+                "deducted_amount": str(refund_info["deducted_amount"]),
+            })
+        return JsonResponse({"status": "cancelled", "refunded_amount": "0", "deducted_amount": "0"})
+
+    if refund_info:
+        messages.success(
+            request,
+            f"Your appointment has been cancelled and EGP {refund_info['refunded_amount']} "
+            f"has been sent back to your card.",
+        )
+    else:
+        messages.success(request, "Your appointment has been cancelled.")
     return redirect("my-appointments")

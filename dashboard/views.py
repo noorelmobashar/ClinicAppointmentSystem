@@ -35,6 +35,7 @@ class DashboardView(LoginRequiredMixin, View):
             next_confirmed_visit = upcoming_appointments.filter(
                 status=Appointment.Status.CONFIRMED
             ).first()
+
             context.update({
                 "dashboard_title": "Your care overview",
                 "dashboard_subtitle": "Track upcoming appointments, recent activity, and the next steps for your clinic visits.",
